@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { onMounted, ref, inject, watch } from 'vue';
+    import { onMounted, ref, inject, watch, computed } from 'vue';
     import type { Product, ShoppingCartItem } from '@/App.vue';
     import { useModal } from '@/composables/useModal'
 
@@ -10,10 +10,17 @@
     // Global data
     const productList = inject<Product[]>('productList')
     const shoppingCart = inject<ShoppingCartItem[]>('shoppingCart')
+
+    // Product to show
     const product = ref<Product | null>(null);
+    const fileName = ref<string | undefined>('');
 
     // Modal
     const { showModal } = useModal()
+
+    // Local editor modal state
+    const showEditor = ref(false)
+    const imageInput = ref<string>('')
 
     // Input for amount for adding to cart
     const amountInput = ref(1);
@@ -26,6 +33,7 @@
     // Read product information to render when mounted
     onMounted(() => {
         fetchProductDetails()
+        fileName.value = product.value?.image
     });
 
     // Watch product list, reload information when changes are detected
@@ -33,9 +41,15 @@
         productList!,
         () => {
             fetchProductDetails()
+            fileName.value = product.value?.image
         },
         { deep: true }
     );
+
+    // Product image
+    const imageSource = computed(() =>
+        new URL(`../assets/images/${fileName.value}`, import.meta.url).href
+    )
 
     // Fetch product details from global data
     function fetchProductDetails() {
@@ -97,10 +111,13 @@
                                 id : productId,
                                 name: nameInput.value,
                                 price: Number(priceInput.value),
-                                description: descriptionInput.value
+                                description: descriptionInput.value,
+                                image: imageInput.value || productList![i]!.image
                             }
                         }
-                    }              
+                    }
+                    // close editor after update
+                    showEditor.value = false
                 }
             })         
         }
@@ -122,13 +139,36 @@
             }
         })
     }
+
+    // Editor modal controls
+    function openEditor() {
+        if (!product.value) return;
+        nameInput.value = product.value.name;
+        priceInput.value = product.value.price;
+        descriptionInput.value = product.value.description;
+        imageInput.value = product.value.image ?? '';
+        showEditor.value = true;
+    }
+
+    function closeEditor() {
+        showEditor.value = false;
+    }
+
+    function confirmDelete() {
+        // close editor first then trigger delete modal
+        showEditor.value = false;
+        deleteProduct();
+    }
 </script>
 
 <template>
     <div class="details-root">
         <div v-if="product" class="details-container">
             <aside class="details-card">
-                <div class="media-placeholder" aria-hidden="true">IMG</div>
+                <div class="media-placeholder">
+                    <img v-if="product.image" :src="imageSource" alt="product image" class="product-image" />
+                    <div v-else aria-hidden="true">IMG</div>
+                </div>
                 <div class="info">
                     <h1 class="title">{{ product.name }}</h1>
                     <p class="price">$ {{ product.price }}</p>
@@ -143,36 +183,50 @@
                             class="qty-input"
                         />
                         <button class="btn primary" @click="addItemToCart(product)">Add to Cart</button>
+                        <button class="btn" @click="openEditor">Edit Details</button>
                     </div>
                 </div>
             </aside>
 
-            <section class="editor-card">
-                <div class="editor-header">
-                    <h2>Edit Product</h2>
-                    <div class="editor-actions">
-                        <button class="btn danger" @click="deleteProduct">Delete</button>
-                        <button class="btn" @click="updateProductDetails">Apply Changes</button>
+            <!-- editor modal -->
+            <Teleport to="body">
+                <div v-if="showEditor" class="editor-modal-overlay">
+                    <div class="editor-modal-card">
+                        <header class="modal-header">
+                            <h3>Edit Product</h3>
+                        </header>
+                        <div class="modal-body">
+                            <div class="editor-body modal-grid">
+                                <label class="field">
+                                    <span class="label-text">Name</span>
+                                    <input type="text" v-model="nameInput" />
+                                </label>
+
+                                <label class="field">
+                                    <span class="label-text">Price</span>
+                                    <input type="number" min="1" v-model="priceInput" @input="priceInput = Math.max(1, priceInput || 0)" />
+                                </label>
+
+                                <label class="field" style="grid-column: 1 / -1;">
+                                    <span class="label-text">Image URL</span>
+                                    <input type="text" v-model="imageInput" />
+                                </label>
+
+                                <label class="field" style="grid-column: 1 / -1;">
+                                    <span class="label-text">Description</span>
+                                    <textarea v-model="descriptionInput" rows="4"></textarea>
+                                </label>
+                            </div>
+                        </div>
+                        <footer class="modal-actions">
+                            <button class="btn danger" @click="confirmDelete">Delete</button>
+                            <div style="flex:1"></div>
+                            <button class="btn" @click="closeEditor">Cancel</button>
+                            <button class="btn" @click="updateProductDetails">Apply Changes</button>
+                        </footer>
                     </div>
                 </div>
-
-                <div class="editor-body">
-                    <label class="field">
-                        <span class="label-text">Name</span>
-                        <input type="text" v-model="nameInput" />
-                    </label>
-
-                    <label class="field">
-                        <span class="label-text">Price</span>
-                        <input type="number" min="1" v-model="priceInput" @input="priceInput = Math.max(1, priceInput || 0)" />
-                    </label>
-
-                    <label class="field">
-                        <span class="label-text">Description</span>
-                        <textarea v-model="descriptionInput" rows="4"></textarea>
-                    </label>
-                </div>
-            </section>
+            </Teleport>
         </div>
 
         <div v-else class="notfound">
@@ -197,28 +251,32 @@
     min-height: 100vh;
 }
 
+
 .details-container {
     display: flex;
     gap: 20px;
     align-items: flex-start;
     max-width: 1100px;
     margin: 0 auto;
+    padding: 12px;
 }
 
 .details-card {
-    width: 360px;
+    width: 100%;
+    max-width: 920px;
     background: var(--card-bg);
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(16,24,40,0.06);
     padding: 18px;
     display: flex;
-    gap: 12px;
+    gap: 18px;
     align-items: flex-start;
 }
 
+
 .media-placeholder {
-    width: 120px;
-    height: 120px;
+    width: 240px;
+    height: 240px;
     border-radius: 8px;
     background: var(--bg-1);
     color: #fff;
@@ -229,9 +287,22 @@
     letter-spacing: 1px;
 }
 
+.product-image { width: 240px; height: 240px; object-fit: contain; border-radius: 8px; }
+
+/* Editor modal styles */
+.editor-modal-overlay {
+    position: fixed; inset: 0; display:flex; align-items:center; justify-content:center; background: rgba(2,6,23,0.5); z-index:1200; padding: 20px;
+}
+.editor-modal-card { width: 100%; max-width: 720px; background: #fff; border-radius: 12px; box-shadow: 0 12px 40px rgba(2,6,23,0.2); overflow: hidden; }
+.modal-header { padding: 14px 18px; border-bottom: 1px solid #f1f5f9; }
+.modal-body { padding: 18px; }
+.modal-actions { display:flex; gap:10px; padding:14px 18px; border-top:1px solid #f1f5f9; align-items:center; }
+.modal-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+
+
 .info .title {
     margin: 0 0 6px 0;
-    font-size: 20px;
+    font-size: 24px;
     color: #0f172a;
 }
 
@@ -239,18 +310,20 @@
     margin: 0 0 10px 0;
     color: var(--accent);
     font-weight: 700;
+    font-size: 18px;
 }
 
 .info .desc {
-    margin: 0 0 12px 0;
+    margin: 12px 0 16px 0;
     color: var(--muted);
 }
+
 
 .cart-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: 14px;
 }
 
 .qty-input {

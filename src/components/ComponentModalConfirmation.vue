@@ -41,7 +41,7 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
-    z-index: 1000;
+    z-index: 1500; /* ensure confirmation modal appears above editor modal */
 }
 
 .modal-card {

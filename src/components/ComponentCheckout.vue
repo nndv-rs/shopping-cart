@@ -75,6 +75,16 @@
             }
         })
     }
+
+    function completeCheckout() {
+        showModal({
+            title: 'Thank you',
+            message: 'Thank you for your purchase! Your order has been placed.',
+            showConfirm: false,
+        })
+        // optionally clear cart
+        // shoppingCart!.splice(0, shoppingCart!.length)
+    }
 </script>
 
 <template>
@@ -113,6 +123,9 @@
 
             <div class="checkout-footer">
                 <div class="total">Total: <span class="total-amount">$ {{ computedTotalPrice }}</span></div>
+                <div class="checkout-actions">
+                    <button class="btn checkout" @click="completeCheckout">Checkout</button>
+                </div>
             </div>
         </div>
 
@@ -143,8 +156,12 @@
 .btn.delete { background: #ff6b6b; color: white; }
 
 .checkout-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
-.total { font-weight: 700; color: #0f172a; }
+.total { font-weight: 700; color: #0f172a; margin-left: 10px; }
 .total-amount { color: #06b6d4; margin-left: 8px; }
+
+.checkout-footer { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+.checkout-actions { display:flex; gap:8px; }
+.btn.checkout { background: linear-gradient(90deg,#10b981,#06b6d4); color: white; margin-right: 10px;}
 
 .empty-card { padding: 20px; background: #fff7ed; border-radius: 10px; color: #7f3700; }
 

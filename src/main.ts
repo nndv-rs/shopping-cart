@@ -7,7 +7,7 @@ import ProductDetails from './pages/product-details/ProductDetails.vue';
 
 // List of pages / routes
 const routes: Record<string, any> = {
-	'/': Home,
+	'/': ProductList,
 	'/pages/product-list.html': ProductList,
 	'/pages/checkout.html': Checkout,
 	'/pages/product-details.html': ProductDetails,

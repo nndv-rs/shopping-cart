@@ -11,7 +11,6 @@
                 <h1 class="site-title">ShoppingCart</h1>
             </div>
             <nav class="header-nav">
-                <button class="nav-btn" @click="go('/')">Home</button>
                 <button class="nav-btn" @click="go('/pages/product-list.html')">Products</button>
                 <button class="nav-btn" @click="go('/pages/checkout.html')">Checkout</button>
             </nav>

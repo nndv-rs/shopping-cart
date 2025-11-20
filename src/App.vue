@@ -16,6 +16,7 @@
         name: string;
         price: number;
         description: string;
+        image?: string;
     }
 
     export type ShoppingCartItem = {
@@ -25,9 +26,27 @@
 
     // PRODUCT LIST DATABASE
     const productList = reactive<Product[]>([
-        {id: 0, name: "Pencil", price: 1, description: "Sharpened pencil"},
-        {id: 1, name: "Table", price: 2, description: "Wooden table"},
-        {id: 2, name: "Book", price: 3, description: "Title: Lorep Ipsum - Author : Dolor Sit Amet"}
+        {
+            id: 0, 
+            name: "Pencil", 
+            price: 1, 
+            description: "Sharpened pencil", 
+            image: "img_pencil.png"
+        },
+        {
+            id: 1, 
+            name: "Table", 
+            price: 2, 
+            description: "Wooden table", 
+            image: "img_table.jpg"
+        },
+        {
+            id: 2, 
+            name: "Book", 
+            price: 3, 
+            description: "Title: Lorep Ipsum - Author : Dolor Sit Amet", 
+            image: "img_book.jpg"
+        }
     ])
 
     // SHOPPING CART

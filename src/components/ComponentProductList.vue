@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { computed, inject, ref } from 'vue'
-    import type { Product } from '@/App.vue';
+    import type { Product, ShoppingCartItem } from '@/App.vue';
     import ComponentSearch from './ComponentSearch.vue';
     import ComponentSort from './ComponentSort.vue';
     import { useModal } from '@/composables/useModal'
@@ -11,6 +11,7 @@
 
     // Global product list
     const productList = inject<Product[]>('productList')
+    const shoppingCart = inject<ShoppingCartItem[]>('shoppingCart')
 
     // Modal
     const { showModal } = useModal()
@@ -83,6 +84,38 @@
         }
     }
 
+    function addItemToCart(productId: number) {
+        let productIndex = productList!.findIndex(product => product.id === productId);
+
+        let productToAdd = productList![productIndex];
+
+        if (productToAdd) {
+            let shoppingCartIndex = shoppingCart!.findIndex(item => item.product.id === productToAdd.id);
+
+            if (shoppingCartIndex == -1) {
+                let itemToAdd: ShoppingCartItem = {
+                    product: productToAdd,
+                    amount: 1
+                }
+                shoppingCart!.push(itemToAdd);
+            } else {
+                shoppingCart![shoppingCartIndex]!.amount++;
+            }
+
+            showModal({
+                title: 'Item added',
+                message: 'Your item has been added to the cart.',
+                showConfirm: false,
+            });
+        } else {
+            showModal({
+                title: 'Error',
+                message: 'An error has occurred, please try again.',
+                showConfirm: false,
+        })
+        }
+    }
+    
     // Handle routing to the correct product detail page
     function viewProductDetails(productId: number) {
         go(`/pages/product-details.html?id=${productId}`);
@@ -130,6 +163,7 @@
                         <td class="desc-col">{{ product.description }}</td>
                         <td class="actions-col">
                             <button class="details-btn" @click="viewProductDetails(product.id)">View Details</button>
+                            <button class="details-btn" @click="addItemToCart(product.id)">Add To Cart</button>
                         </td>
                     </tr>
                 </tbody>
@@ -207,6 +241,7 @@
     padding: 8px 10px;
     border-radius: 8px;
     cursor: pointer;
+    margin-right: 5px;
 }
 
 .add-btn {
