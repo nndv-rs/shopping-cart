@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '@/assets/css/ComponentProductDetails.css'
 import { onMounted, ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router'
 import { useModal } from '@/composables/useModal'
@@ -41,7 +42,6 @@ const descriptionInput = ref<string>('');
 // Read product information to render when mounted
 onMounted(() => {
     fetchProductDetails()
-    imageFileName.value = product.value?.image
 });
 
 // Watch product list, reload information when changes are detected
@@ -49,7 +49,6 @@ watch(
     productList!,
     () => {
         fetchProductDetails()
-        imageFileName.value = product.value?.image
     },
     { deep: true }
 );
@@ -73,16 +72,6 @@ function readIdFromUrl(): number | null {
     } catch {
         return null;
     }
-}
-
-// Product image
-const imageSource = computed(() =>
-    new URL(`../assets/images/${imageFileName.value}`, import.meta.url).href
-)
-
-// Load fallback image when file name is wrong or does not exist
-function handleMissingImage() {
-    imageFileName.value = 'img_test_placeholder.png'
 }
 
 // Function for adding item to cart
@@ -126,7 +115,7 @@ function updateProductDetails() {
  }
 
 
-// Function for deletring a produc from the list
+// Function for deletring a product from the list
 function deleteProduct() {
     showModal({
         title: 'Confirm Delete',
@@ -165,7 +154,7 @@ function confirmDelete() {
         <div v-if="product" class="details-container">
             <aside class="details-card">
                 <div class="media-placeholder">
-                    <img v-if="product.image" :src="imageSource" alt="product image" class="product-image" @error="handleMissingImage"/>
+                    <img v-if="product.image" :src="product.image" alt="product image" class="product-image" />
                     <div v-else aria-hidden="true">IMG</div>
                 </div>
                 <div class="info">
@@ -198,7 +187,7 @@ function confirmDelete() {
                             <div class="editor-body modal-grid">
                                 <label class="field">
                                     <span class="label-text">Name</span>
-                                    <input type="text" v-model="nameInput" required />
+                                    <input type="text" v-model="nameInput" />
                                 </label>
 
                                 <label class="field">
@@ -213,7 +202,7 @@ function confirmDelete() {
 
                                 <label class="field" style="grid-column: 1 / -1;">
                                     <span class="label-text">Description</span>
-                                    <textarea v-model="descriptionInput" rows="4" required></textarea>
+                                    <textarea v-model="descriptionInput" rows="4"></textarea>
                                 </label>
                             </div>
                         </div>
@@ -235,181 +224,5 @@ function confirmDelete() {
 </template>
 
 <style scoped>
-:root {
-    --bg-1: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-    --card-bg: #ffffff;
-    --muted: #6b7280;
-    --accent: #7c3aed;
-    --danger: #ef4444;
-}
 
-.details-root {
-    padding: 24px;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    background: radial-gradient(circle at 10% 10%, rgba(124,58,237,0.06), transparent 20%), #f8fafc;
-    min-height: 100vh;
-}
-
-.details-container {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 12px;
-}
-
-.details-card {
-    width: 100%;
-    max-width: 920px;
-    background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(16,24,40,0.06);
-    padding: 18px;
-    display: flex;
-    gap: 18px;
-    align-items: flex-start;
-}
-
-.media-placeholder {
-    width: 240px;
-    height: 240px;
-    border-radius: 8px;
-    background: var(--bg-1);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.product-image { width: 240px; height: 240px; object-fit: contain; border-radius: 8px; }
-
-/* Editor modal styles */
-.editor-modal-overlay {
-    position: fixed; inset: 0; display:flex; align-items:center; justify-content:center; background: rgba(2,6,23,0.5); z-index:1200; padding: 20px;
-}
-.editor-modal-card { width: 100%; max-width: 720px; background: #fff; border-radius: 12px; box-shadow: 0 12px 40px rgba(2,6,23,0.2); overflow: hidden; }
-.modal-header { padding: 14px 18px; border-bottom: 1px solid #f1f5f9; }
-.modal-body { padding: 18px; }
-.modal-actions { display:flex; gap:10px; padding:14px 18px; border-top:1px solid #f1f5f9; align-items:center; }
-.modal-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-
-.info .title {
-    margin: 0 0 6px 0;
-    font-size: 24px;
-    color: #0f172a;
-}
-
-.info .price {
-    margin: 0 0 10px 0;
-    color: var(--accent);
-    font-weight: 700;
-    font-size: 18px;
-}
-
-.info .desc {
-    margin: 12px 0 16px 0;
-    color: var(--muted);
-}
-
-.cart-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 14px;
-}
-
-.qty-input {
-    width: 84px;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #e6e6f0;
-}
-
-.btn {
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.btn.primary {
-    background: linear-gradient(90deg, #7c3aed, #06b6d4);
-    color: white;
-}
-
-.btn.danger {
-    background-color: #ef4444;
-    color: white;
-}
-
-.editor-card {
-    flex: 1;
-    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.95));
-    border-radius: 12px;
-    padding: 18px;
-    box-shadow: 0 6px 20px rgba(15,23,42,0.04);
-}
-
-.editor-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.editor-header h2 {
-    margin: 0;
-}
-
-.editor-actions .btn {
-    margin-left: 8px;
-}
-
-.editor-body {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-.field {
-    display: flex;
-    flex-direction: column;
-}
-
-.label-text {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 6px;
-}
-
-input[type="text"],
-input[type="number"],
-textarea {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #e6e6f0;
-}
-
-.notfound {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 20px;
-    background: #fff4f4;
-    border-radius: 8px;
-    color: #7f1d1d;
-}
-
-@media (max-width: 900px) {
-    .details-container {
-        flex-direction: column;
-        padding: 12px;
-    }
-
-    .editor-body {
-        grid-template-columns: 1fr;
-    }
-}
 </style>

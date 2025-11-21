@@ -9,21 +9,21 @@ export const useProductListStore = defineStore('productListStore', {
                 name: "Pencil", 
                 price: 1, 
                 description: "Sharpened pencil", 
-                image: "img_pencil.png"
+                image: "https://png.pngtree.com/png-clipart/20221219/ourmid/pngtree-pencil-clipart-png-image_6529094.png"
             },
             {
                 id: 1, 
                 name: "Table", 
                 price: 2, 
                 description: "Wooden table", 
-                image: "img_table.jpg"
+                image: "https://www.shutterstock.com/image-vector/table-furniture-wood-interior-wooden-260nw-2468173261.jpg"
             },
             {
                 id: 2, 
                 name: "Book", 
                 price: 3, 
                 description: "Title: Lorep Ipsum - Author : Dolor Sit Amet", 
-                image: "img_book.jpg"
+                image: "https://png.pngtree.com/element_our/20190522/ourmid/pngtree-open-book-illustration-image_1072047.jpg"
             }
             ] as Product[],
     }),

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '@/assets/css/AuthenticationPages.css'
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useModal } from '@/composables/useModal'

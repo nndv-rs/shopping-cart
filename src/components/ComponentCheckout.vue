@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '@/assets/css/ComponentCheckout.css'
 import { reactive, onMounted, watch, computed } from 'vue';
 import { useModal } from '@/composables/useModal'
 import type { ShoppingCartItem } from '@/types/ShoppingCartItem';
@@ -135,37 +136,5 @@ function removeItem(item: ShoppingCartItem) {
 </template>
 
 <style scoped>
-/* Modern checkout styles */
-.checkout-root { padding: 18px; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto; }
-.checkout-card { background: #ffffff; border-radius: 12px; padding: 16px; box-shadow: 0 8px 24px rgba(16,24,40,0.05); }
-.checkout-title { margin: 0 0 10px 0; color: #0f172a; }
 
-.cart-table { width: 100%; border-collapse: collapse; }
-.cart-table th, .cart-table td { padding: 12px 10px; border-bottom: 1px solid #eef2ff; }
-.cart-table thead th { background: linear-gradient(90deg, rgba(124,58,237,0.05), rgba(6,182,212,0.03)); font-weight: 700; }
-.name-col { font-weight: 600; }
-.price-col { color: #06b6d4; font-weight: 600; }
-.desc-col { color: #525252; }
-.qty-col { width: 80px; text-align: center; }
-.actions-col { text-align: right; min-width: 220px; }
-
-.qty-input { width: 74px; padding: 8px; margin-right: 8px; border-radius: 8px; border: 1px solid #e6e6f0; }
-.btn { padding: 8px 10px; border-radius: 8px; cursor: pointer; border: none; }
-.btn.update { background: linear-gradient(90deg,#7c3aed,#06b6d4); color: white; margin-right: 6px; }
-.btn.delete { background: #ff6b6b; color: white; }
-
-.checkout-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
-.total { font-weight: 700; color: #0f172a; margin-left: 10px; }
-.total-amount { color: #06b6d4; margin-left: 8px; }
-
-.checkout-footer { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
-.checkout-actions { display:flex; gap:8px; }
-.btn.checkout { background: linear-gradient(90deg,#10b981,#06b6d4); color: white; margin-right: 10px;}
-
-.empty-card { padding: 20px; background: #fff7ed; border-radius: 10px; color: #7f3700; }
-
-@media (max-width: 700px) {
-    .actions-col { text-align: left; }
-    .cart-table th, .cart-table td { padding: 8px; }
-}
 </style>

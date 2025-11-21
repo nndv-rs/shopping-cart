@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, inject } from 'vue'
+import '@/assets/css/ComponentProductList.css'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useModal } from '@/composables/useModal'
 import { useProductListStore } from '@/stores/ProductListStore'
@@ -34,6 +35,7 @@ const searchText = ref<string>("");
 const nameInput = ref<string>('');
 const priceInput = ref<number>(1);
 const descriptionInput = ref<string>('');
+const imageInput = ref<string>('');
 
 // Compute which item to show on the list when there are search queries and filters
 const renderList = computed(() => {
@@ -77,7 +79,7 @@ const renderList = computed(() => {
 
 // Add a product to the product list store
 function addProductToStore() {
-    if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "")) {
+    if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "" || imageInput.value == "")) {
         showModal({
             title: 'Invalid Input',
             message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
@@ -88,9 +90,16 @@ function addProductToStore() {
             id: Math.floor(Math.random() * 100000),
             name: nameInput.value,
             price: Number(priceInput.value),
-            description: descriptionInput.value
+            description: descriptionInput.value,
+            image: imageInput.value
         }
         productListStore.addProductToList(newProduct)
+
+        // Reset input fields after adding a new product
+        priceInput.value = 1
+        nameInput.value = ""
+        descriptionInput.value = ""
+        imageInput.value = ""
     }
 }
 
@@ -174,6 +183,9 @@ function handleSortUpdate(message: string) {
                             <button class="add-btn" @click="addProductToStore">Add Product</button>
                         </td>
                     </tr>
+                    <tr>
+                        <td colspan="3"><input class="input" type="text" v-model="imageInput" placeholder="Image URL"></input></td>
+                    </tr>
                 </tfoot>
             </table>
         </div>
@@ -183,87 +195,5 @@ function handleSortUpdate(message: string) {
 </template>
 
 <style scoped>
-/* Modern colorful styles for product list */
-.pl-root {
-    padding: 18px;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-}
 
-.pl-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.pl-title {
-    margin: 0;
-    color: #0f172a;
-}
-
-.pl-card {
-    background: linear-gradient(180deg, #ffffff, #fbfcff);
-    padding: 12px;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(15,23,42,0.04);
-}
-
-.product-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.product-table th,
-.product-table td {
-    border-bottom: 1px solid #eef2ff;
-    padding: 10px 14px;
-    text-align: left;
-}
-
-.product-table thead th {
-    background: linear-gradient(90deg, rgba(124,58,237,0.06), rgba(6,182,212,0.03));
-    font-weight: 700;
-    color: #0f172a;
-}
-
-.name-col { font-weight: 600; color: #0f172a; }
-.price-col { color: #06b6d4; font-weight: 600; }
-.desc-col { color: #525252; }
-
-.actions-col { text-align: right; }
-
-.details-btn {
-    background: linear-gradient(90deg,#7c3aed,#06b6d4);
-    color: #fff;
-    border: none;
-    padding: 8px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-right: 5px;
-}
-
-.add-btn {
-    background: #10b981;
-    color: #fff;
-    border: none;
-    padding: 8px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.input {
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid #e6e6f0;
-}
-
-.list-empty {
-    margin-top: 12px;
-    color: #6b7280;
-}
-
-@media (max-width: 700px) {
-    .actions-col { text-align: left; }
-    .product-table th, .product-table td { padding: 8px; }
-}
 </style>
