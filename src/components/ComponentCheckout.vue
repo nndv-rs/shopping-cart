@@ -1,80 +1,80 @@
 <script setup lang="ts">
-    import { inject, reactive, onMounted, watch, computed } from 'vue';
-    import type { ShoppingCartItem } from '@/App.vue';
-    import { useModal } from '@/composables/useModal'
+import { reactive, onMounted, watch, computed } from 'vue';
+import { useModal } from '@/composables/useModal'
+import type { ShoppingCartItem } from '@/types/ShoppingCartItem';
+import { useShoppingCartStore } from '@/stores/ShoppingCartStore';
 
-    const shoppingCart = inject<ShoppingCartItem[]>('shoppingCart');
+// Global data
+const shoppingCartStore = useShoppingCartStore()
+const { getShoppingCart, removeItemFromCart } = shoppingCartStore
+const shoppingCart = getShoppingCart
 
-    // Keep a local input value so edits don't immediately mutate the shopping cart
-    const quantityInputs = reactive<Record<number, string>>({});
+// Keep a local input value so edits don't immediately mutate the shopping cart
+const quantityInputs = reactive<Record<number, string>>({});
 
-    // Use modal for confirmation upon item Update/Delete
-    const { showModal } = useModal()
+// Use modal for confirmation upon item Update/Delete
+const { showModal } = useModal()
 
-    // Total price calculation
-    const computedTotalPrice = computed(() => {
-        let totalPrice = 0;
-        shoppingCart!.forEach(item => {
-            totalPrice = totalPrice + (item.amount * item.product.price);
-        });
-        return totalPrice;
+// Total price calculation
+const computedTotalPrice = computed(() => {
+    let totalPrice = 0;
+    shoppingCart!.forEach(item => {
+        totalPrice = totalPrice + (item.amount * item.product.price);
     });
+    return totalPrice;
+});
 
-    // Get item quanitity inside cart upon mounting
-    onMounted(() => {
-        shoppingCart!.forEach(item => {
-            quantityInputs[item.product.id] = String(item.amount);
-        });
+// Get item quanitity inside cart upon mounting
+onMounted(() => {
+    shoppingCart!.forEach(item => {
+        quantityInputs[item.product.id] = String(item.amount);
     });
+});
 
-    // Watch for item quantity changes
-    watch(
-        shoppingCart!,
-        (newVal) => {
-            newVal.forEach(item => {
-                if (!(item.product.id in quantityInputs)) {
-                    quantityInputs[item.product.id] = String(item.amount);
-                }
-            });
-        },
-        { deep: true }
-    );
-
-    // Updating the amount of items inside the cart
-    function updateAmount(item: ShoppingCartItem) {
-        showModal({
-            title: 'Confirm Update',
-            message: 'Are you sure you want to update this item in your cart?',
-            showConfirm: true,
-            onConfirm: () => {
-                const rawInput = quantityInputs[item.product.id];
-                const amountInput = parseInt(String(rawInput), 10);
-                if (amountInput < 1 || Number.isNaN(amountInput)) {
-                    // Enforce minimum 1
-                    item.amount = 1;
-                    quantityInputs[item.product.id] = '1';
-                } else {
-                    item.amount = amountInput;
-                }
+// Watch for item quantity changes
+watch(
+    shoppingCart!,
+    (newVal) => {
+        newVal.forEach(item => {
+            if (!(item.product.id in quantityInputs)) {
+                quantityInputs[item.product.id] = String(item.amount);
             }
-        })
-    }
+        });
+    },
+    { deep: true }
+);
 
-    // Removing an item inside the cart
-    function removeItem(item: ShoppingCartItem) {
-        showModal({
-            title: 'Confirm Deletion',
-            message: 'Are you sure you want to remove this item from your cart?',
-            showConfirm: true,
-            onConfirm: () => {
-                const index = shoppingCart!.indexOf(item);
-                if (index !== -1) {
-                    shoppingCart!.splice(index, 1);
-                    delete quantityInputs[item.product.id];
-                }
+// Updating the amount of items inside the cart
+function updateAmount(item: ShoppingCartItem) {
+    showModal({
+        title: 'Confirm Update',
+        message: 'Are you sure you want to update this item in your cart?',
+        showConfirm: true,
+        onConfirm: () => {
+            const rawInput = quantityInputs[item.product.id];
+            const amountInput = parseInt(String(rawInput), 10);
+            if (amountInput < 1 || Number.isNaN(amountInput)) {
+                // Enforce minimum 1
+                quantityInputs[item.product.id] = '1';
+                shoppingCartStore.updateItemAmountInCart(item, 1)
+            } else {
+                shoppingCartStore.updateItemAmountInCart(item, amountInput)
             }
-        })
-    }
+        }
+    })
+}
+
+// Removing an item inside the cart
+function removeItem(item: ShoppingCartItem) {
+    showModal({
+        title: 'Confirm Deletion',
+        message: 'Are you sure you want to remove this item from your cart?',
+        showConfirm: true,
+        onConfirm: () => {
+            shoppingCartStore.removeItemFromCart(item)
+        }
+    })
+}
 
     function completeCheckout() {
         showModal({
@@ -82,8 +82,7 @@
             message: 'Thank you for your purchase! Your order has been placed.',
             showConfirm: false,
         })
-        // optionally clear cart
-        // shoppingCart!.splice(0, shoppingCart!.length)
+        shoppingCart!.splice(0, shoppingCart!.length)
     }
 </script>
 

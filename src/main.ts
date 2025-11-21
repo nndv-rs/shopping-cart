@@ -1,46 +1,31 @@
-import { createApp, ref } from 'vue';
+import { createApp } from 'vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import { createPinia } from 'pinia'
 import App from './App.vue';
-import Home from './pages/home/Home.vue';
 import ProductList from './pages/product-list/ProductList.vue';
 import Checkout from './pages/checkout/Checkout.vue';
 import ProductDetails from './pages/product-details/ProductDetails.vue';
+import Registeration from './pages/registeration/Registeration.vue';
+import Login from './pages/login/Login.vue';
 
-// List of pages / routes
-const routes: Record<string, any> = {
-	'/': ProductList,
-	'/pages/product-list.html': ProductList,
-	'/pages/checkout.html': Checkout,
-	'/pages/product-details.html': ProductDetails,
-};
+const routes = [
+	{ path: '/', name: 'home', component: Login },
+	{ path: '/pages/product-list.html', name: 'product-list', component: ProductList },
+	{ path: '/pages/checkout.html', name: 'checkout', component: Checkout },
+	{ path: '/pages/product-details.html', name: 'product-details', component: ProductDetails },
+    { path: '/pages/registeration.html', name: 'registeration', component: Registeration },
+    { path: '/pages/login.html', name: 'login', component: Login },
+];
 
-const currentPath = ref(window.location.pathname || '/');
-
-function getPathname(fullPath: string) {
-	try {
-		const url = new URL(fullPath, window.location.origin);
-		return url.pathname;
-	} catch {
-		return fullPath.split('?')[0] || '/';
-	}
-}
-
-function navigate(fullPath: string) {
-	const pathname = getPathname(fullPath);
-	if (pathname === currentPath.value) return;
-	history.pushState({}, '', fullPath);
-	currentPath.value = pathname;
-}
-
-window.addEventListener('popstate', () => {
-	currentPath.value = window.location.pathname;
+const router = createRouter({
+	history: createWebHistory(),
+	routes,
 });
 
 const app = createApp(App);
 
-app.provide('router', {
-	routes,
-	currentPath,
-	navigate,
-});
+const pinia = createPinia()
 
+app.use(router);
+app.use(pinia)
 app.mount('#app');

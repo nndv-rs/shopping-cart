@@ -27,12 +27,12 @@ function emitSort() {
 </template>
 
 <style scoped>
-        .sort-btn {
-            background: linear-gradient(90deg,#7c3aed,#06b6d4);
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
+.sort-btn {
+    background: linear-gradient(90deg,#7c3aed,#06b6d4);
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
 </style>

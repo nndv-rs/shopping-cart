@@ -1,14 +1,13 @@
 <script setup lang="ts">
-    import { ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
-    const searchText = ref<String>('')
+const searchText = ref<String>('')
 
-    const emit = defineEmits(['updateSearch'])
+const emit = defineEmits(['updateSearch'])
 
-    watch(searchText, (newValue) => {
-        emit('updateSearch', newValue)
-    })
-
+watch(searchText, (newValue) => {
+    emit('updateSearch', newValue)
+})
 </script>
 
 <template>

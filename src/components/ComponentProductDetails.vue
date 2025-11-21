@@ -1,164 +1,163 @@
 <script setup lang="ts">
-    import { onMounted, ref, inject, watch, computed } from 'vue';
-    import type { Product, ShoppingCartItem } from '@/App.vue';
-    import { useModal } from '@/composables/useModal'
+import { onMounted, ref, computed, watch } from 'vue';
+import { useRouter } from 'vue-router'
+import { useModal } from '@/composables/useModal'
+import { useProductListStore } from '@/stores/ProductListStore'
+import { useShoppingCartStore } from '@/stores/ShoppingCartStore';
+import type { Product } from '@/types/Product';
 
-    // Routing
-    const router = inject('router') as any;
-    const go = (path: string) => router?.navigate(path);
+// Routing
+const router = useRouter()
+const go = (path: string) => router.push(path)
 
-    // Global data
-    const productList = inject<Product[]>('productList')
-    const shoppingCart = inject<ShoppingCartItem[]>('shoppingCart')
+// Global data
+const productListStore = useProductListStore()
+const { getProductList, removeProductFromList } = productListStore
+const productList = getProductList
 
-    // Product to show
-    const product = ref<Product | null>(null);
-    const fileName = ref<string | undefined>('');
+const shoppingCartStore = useShoppingCartStore()
+const { getShoppingCart } = shoppingCartStore
+const shoppingCart = getShoppingCart
 
-    // Modal
-    const { showModal } = useModal()
+// Product to show
+const product = ref<Product | null>(null);
+const imageFileName = ref<string | undefined>('');
 
-    // Local editor modal state
-    const showEditor = ref(false)
-    const imageInput = ref<string>('')
+// Modal
+const { showModal } = useModal();
 
-    // Input for amount for adding to cart
-    const amountInput = ref(1);
+// Local editor modal state
+const showEditor = ref(false)
+const imageInput = ref<string>('')
 
-    // Input to edit product
-    const nameInput = ref<string>('');
-    const priceInput = ref<number>(1);
-    const descriptionInput = ref<string>('');
+// Input for amount for adding to cart
+const amountInput = ref(1);
 
-    // Read product information to render when mounted
-    onMounted(() => {
+// Input to edit product
+const nameInput = ref<string>('');
+const priceInput = ref<number>(1);
+const descriptionInput = ref<string>('');
+
+// Read product information to render when mounted
+onMounted(() => {
+    fetchProductDetails()
+    imageFileName.value = product.value?.image
+});
+
+// Watch product list, reload information when changes are detected
+watch(
+    productList!,
+    () => {
         fetchProductDetails()
-        fileName.value = product.value?.image
-    });
+        imageFileName.value = product.value?.image
+    },
+    { deep: true }
+);
 
-    // Watch product list, reload information when changes are detected
-    watch(
-        productList!,
-        () => {
-            fetchProductDetails()
-            fileName.value = product.value?.image
-        },
-        { deep: true }
-    );
-
-    // Product image
-    const imageSource = computed(() =>
-        new URL(`../assets/images/${fileName.value}`, import.meta.url).href
-    )
-
-    // Fetch product details from global data
-    function fetchProductDetails() {
-        const productId = readIdFromUrl();
-        if (productId != null) {
-            product.value = productList!.find(product => product.id === productId) ?? null;
-        }
+// Fetch product details from global data
+function fetchProductDetails() {
+    const productId = readIdFromUrl();
+    if (productId != null) {
+        product.value = productList!.find(product => product.id === productId) ?? null;
     }
+}
 
-    // Get product id from URL
-    function readIdFromUrl(): number | null {
-        try {
-            const params = new URLSearchParams(window.location.search);
-            const raw = params.get('id');
-            if (!raw) return null;
-            const n = parseInt(raw, 10);
-            return Number.isNaN(n) ? null : n;
-        } catch {
-            return null;
-        }
+// Get product id from URL
+function readIdFromUrl(): number | null {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const raw = params.get('id');
+        if (!raw) return null;
+        const n = parseInt(raw, 10);
+        return Number.isNaN(n) ? null : n;
+    } catch {
+        return null;
     }
+}
 
-    function addItemToCart(productToAdd: Product) {
-        const index = shoppingCart!.findIndex(item => item.product.id === productToAdd.id)
-        if (index == -1) {
-            shoppingCart!.push({
-                product: productToAdd,
-                amount: amountInput.value   
-            })       
-        } else {
-            shoppingCart![index]!.amount = shoppingCart![index]!.amount + amountInput.value;
-        }
+// Product image
+const imageSource = computed(() =>
+    new URL(`../assets/images/${imageFileName.value}`, import.meta.url).href
+)
+
+// Load fallback image when file name is wrong or does not exist
+function handleMissingImage() {
+    imageFileName.value = 'img_test_placeholder.png'
+}
+
+// Function for adding item to cart
+function addItemToCart(productToAdd: Product) {
+    shoppingCartStore.addItemToCart(productToAdd, amountInput.value)
+    showModal({
+        title: 'Item added',
+        message: 'Your item has been added to the cart.',
+        showConfirm: false,
+    })
+}
+
+// Function for updating a product details
+function updateProductDetails() {
+    let productId = Number(product.value?.id);
+    if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "")) {
         showModal({
-            title: 'Item added',
-            message: 'Your item has been added to the cart.',
+            title: 'Invalid Input',
+            message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
             showConfirm: false,
         })
-    }
-
-    function updateProductDetails() {
-        let productId = Number(product.value?.id);
-
-        if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "")) {
-            showModal({
-                title: 'Invalid Input',
-                message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
-                showConfirm: false,
-            })
-        } else {
-            showModal({
-                title: 'Confirm Update',
-                message: 'Are you sure you want to update this item details and save it to the database ?',
-                showConfirm: true,
-                onConfirm: () => {
-                    let productId = readIdFromUrl();
-                    for (let i = 0; i < productList!.length; i++) {
-                        if (productId == productList![i]!.id) {
-                            productList![i] = {
-                                id : productId,
-                                name: nameInput.value,
-                                price: Number(priceInput.value),
-                                description: descriptionInput.value,
-                                image: imageInput.value || productList![i]!.image
-                            }
-                        }
-                    }
-                    // close editor after update
-                    showEditor.value = false
-                }
-            })         
-        }
-    }
-
-    function deleteProduct() {
+    } else {
         showModal({
-            title: 'Confirm Delete',
-            message: 'Are you sure you want to delete this item from the database?',
+            title: 'Confirm Update',
+            message: 'Are you sure you want to update this item details and save it to the database ?',
             showConfirm: true,
             onConfirm: () => {
-                let productId = Number(product.value?.id);
-                for (let i = 0; i < productList!.length; i++) {
-                    if (productId == productList![i]!.id) {
-                        productList?.splice(i, 1)
-                    }
-                }
-                go(`/pages/product-list.html`); // Redirect back to Product List page
+                let productInput : Product = {
+                    id : productId,
+                    name: nameInput.value,
+                    price: Number(priceInput.value),
+                    description: descriptionInput.value,
+                    image: imageInput.value
+                } 
+                productListStore.updateProductDetail(productInput)
+                // Close editor after update
+                showEditor.value = false              
             }
-        })
+        })         
     }
+ }
 
-    // Editor modal controls
-    function openEditor() {
-        if (!product.value) return;
-        nameInput.value = product.value.name;
-        priceInput.value = product.value.price;
-        descriptionInput.value = product.value.description;
-        imageInput.value = product.value.image ?? '';
-        showEditor.value = true;
-    }
 
-    function closeEditor() {
-        showEditor.value = false;
-    }
+// Function for deletring a produc from the list
+function deleteProduct() {
+    showModal({
+        title: 'Confirm Delete',
+        message: 'Are you sure you want to delete this item from the database?',
+        showConfirm: true,
+        onConfirm: () => {
+            let productId = Number(product.value?.id);
+            productListStore.removeProductFromList(productId);
+            go(`/pages/product-list.html`); // Redirect back to Product List page
+        }
+    })
+}
 
-    function confirmDelete() {
-        // close editor first then trigger delete modal
-        showEditor.value = false;
-        deleteProduct();
-    }
+// Editor modal controls, upon opening the modal, pre-fill with existing information
+function openEditor() {
+    if (!product.value) return;
+    nameInput.value = product.value.name;
+    priceInput.value = product.value.price;
+    descriptionInput.value = product.value.description;
+    imageInput.value = product.value.image ?? '';
+    showEditor.value = true;
+}
+
+function closeEditor() {
+    showEditor.value = false;
+}
+
+function confirmDelete() {
+    showEditor.value = false;
+    deleteProduct();
+}
 </script>
 
 <template>
@@ -166,7 +165,7 @@
         <div v-if="product" class="details-container">
             <aside class="details-card">
                 <div class="media-placeholder">
-                    <img v-if="product.image" :src="imageSource" alt="product image" class="product-image" />
+                    <img v-if="product.image" :src="imageSource" alt="product image" class="product-image" @error="handleMissingImage"/>
                     <div v-else aria-hidden="true">IMG</div>
                 </div>
                 <div class="info">
@@ -199,7 +198,7 @@
                             <div class="editor-body modal-grid">
                                 <label class="field">
                                     <span class="label-text">Name</span>
-                                    <input type="text" v-model="nameInput" />
+                                    <input type="text" v-model="nameInput" required />
                                 </label>
 
                                 <label class="field">
@@ -214,7 +213,7 @@
 
                                 <label class="field" style="grid-column: 1 / -1;">
                                     <span class="label-text">Description</span>
-                                    <textarea v-model="descriptionInput" rows="4"></textarea>
+                                    <textarea v-model="descriptionInput" rows="4" required></textarea>
                                 </label>
                             </div>
                         </div>
@@ -251,7 +250,6 @@
     min-height: 100vh;
 }
 
-
 .details-container {
     display: flex;
     gap: 20px;
@@ -272,7 +270,6 @@
     gap: 18px;
     align-items: flex-start;
 }
-
 
 .media-placeholder {
     width: 240px;
@@ -299,7 +296,6 @@
 .modal-actions { display:flex; gap:10px; padding:14px 18px; border-top:1px solid #f1f5f9; align-items:center; }
 .modal-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
 
-
 .info .title {
     margin: 0 0 6px 0;
     font-size: 24px;
@@ -317,7 +313,6 @@
     margin: 12px 0 16px 0;
     color: var(--muted);
 }
-
 
 .cart-row {
     display: flex;

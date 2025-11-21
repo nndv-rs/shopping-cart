@@ -1,15 +1,15 @@
 <script setup lang="ts">
-    import { useModal } from '@/composables/useModal'
+import { useModal } from '@/composables/useModal'
 
-    const modal = useModal()
+const modal = useModal()
 
-    const modalState = modal.modalState
-    const closeModal = modal.closeModal
+const modalState = modal.modalState
+const closeModal = modal.closeModal
 
-    function handleConfirm() {
-        modalState.value?.onConfirm?.()
-        closeModal()
-    }
+function handleConfirm() {
+    modalState.value?.onConfirm?.()
+    closeModal()
+}
 </script>
 
 <template>
