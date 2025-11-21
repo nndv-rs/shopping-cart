@@ -1,6 +1,5 @@
 import { createApp, ref } from 'vue';
 import App from './App.vue';
-import Home from './pages/home/Home.vue';
 import ProductList from './pages/product-list/ProductList.vue';
 import Checkout from './pages/checkout/Checkout.vue';
 import ProductDetails from './pages/product-details/ProductDetails.vue';
