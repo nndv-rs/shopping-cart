@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import '@/pages/styles/ComponentSort.css'; 
+import '@/assets/css/ComponentSort.css'; 
 import { computed } from 'vue'
 import type { PropType } from 'vue'
 

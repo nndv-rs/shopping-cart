@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import '@/pages/styles/ComponentModalConfirmation.css'; 
+    import '@/assets/css/ComponentModalConfirmation.css'; 
     import { useModal } from '@/composables/useModal'
 
     const modal = useModal()

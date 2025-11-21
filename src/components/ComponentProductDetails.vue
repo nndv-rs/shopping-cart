@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import '@/pages/styles/ComponentProductDetails.css'; 
+    import '@/assets/css/ComponentProductDetails.css'; 
     import { onMounted, ref, inject, watch, computed } from 'vue';
     import type { Product, ShoppingCartItem } from '@/App.vue';
     import { useModal } from '@/composables/useModal'

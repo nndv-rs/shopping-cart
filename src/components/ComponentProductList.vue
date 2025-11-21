@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import '@/pages/styles/ComponentProductList.css'; 
+    import '@/assets/css/ComponentProductList.css'; 
     import { computed, inject, ref } from 'vue'
     import type { Product, ShoppingCartItem } from '@/App.vue';
     import ComponentSearch from './ComponentSearch.vue';

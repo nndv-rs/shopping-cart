@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-    import '@/pages/styles/pages.css'; 
+    import '@/assets/css/pages.css'; 
     import { inject } from 'vue';
     import ComponentProductList from '@/components/ComponentProductList.vue';
 

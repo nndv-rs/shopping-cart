@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-    import '@/pages/styles/pages.css'; 
+    import '@/assets/css/pages.css'; 
     import ComponentCheckout from '@/components/ComponentCheckout.vue';
     import { inject } from 'vue';
     const router = inject('router') as any;
