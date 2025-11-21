@@ -69,7 +69,7 @@
     })
     
     function addProduct() {
-        if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "")) {
+        if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "" || imageInput.value == "")) {
             showModal({
                 title: 'Invalid Input',
                 message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
