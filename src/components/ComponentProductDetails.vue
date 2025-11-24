@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import '@/assets/css/ComponentProductDetails.css'
-import { onMounted, ref, computed, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router'
 import { useModal } from '@/composables/useModal'
 import { useProductListStore } from '@/stores/ProductListStore'
@@ -22,7 +22,6 @@ const shoppingCart = getShoppingCart
 
 // Product to show
 const product = ref<Product | null>(null);
-const imageFileName = ref<string | undefined>('');
 
 // Modal
 const { showModal } = useModal();
@@ -106,7 +105,7 @@ function updateProductDetails() {
                     description: descriptionInput.value,
                     image: imageInput.value
                 } 
-                productListStore.updateProductDetail(productInput)
+                productListStore.updateProductDetails(productInput)
                 // Close editor after update
                 showEditor.value = false              
             }

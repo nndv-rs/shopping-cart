@@ -1,31 +1,11 @@
 import { defineStore } from 'pinia'
 import type { Product } from '@/types/Product'
+import { database } from '@/main';
+import { collection, query, where, addDoc, getDocs, updateDoc, deleteDoc } from "firebase/firestore";
 
 export const useProductListStore = defineStore('productListStore', {
     state: () => ({
-        productList: [
-            {
-                id: 0, 
-                name: "Pencil", 
-                price: 1, 
-                description: "Sharpened pencil", 
-                image: "https://png.pngtree.com/png-clipart/20221219/ourmid/pngtree-pencil-clipart-png-image_6529094.png"
-            },
-            {
-                id: 1, 
-                name: "Table", 
-                price: 2, 
-                description: "Wooden table", 
-                image: "https://www.shutterstock.com/image-vector/table-furniture-wood-interior-wooden-260nw-2468173261.jpg"
-            },
-            {
-                id: 2, 
-                name: "Book", 
-                price: 3, 
-                description: "Title: Lorep Ipsum - Author : Dolor Sit Amet", 
-                image: "https://png.pngtree.com/element_our/20190522/ourmid/pngtree-open-book-illustration-image_1072047.jpg"
-            }
-            ] as Product[],
+        productList: [] as Product[],
     }),
 
     getters: {
@@ -37,28 +17,78 @@ export const useProductListStore = defineStore('productListStore', {
     },
 
     actions: {
-        addProductToList(product: Product) {
-            this.productList.push(product)
+        // Add a product to Firebase
+        async addProductToList(product: Product) {
+            try {
+                await addDoc(collection(database, "productList"), product);
+                this.fetchProductListFromFirebase();
+            } catch {
+                return null;
+            }   
         },
 
-        updateProductDetail(productInput: Product) {
-            const index = this.productList.findIndex(product => product.id == productInput.id)
-            if (index !== -1) {
-                this.productList[index] = {
+        // Update a product details to Firebase
+        async updateProductDetails(productInput: Product) {
+            const q = query(
+                collection(database, "productList"),
+                where("id", "==", productInput.id)
+            );
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                return null;
+            } else {
+                const docToUpdate = querySnapshot.docs[0]
+                const dataInput = {
                     id: productInput.id,
                     name: productInput.name,
                     price: productInput.price,
                     description: productInput.description,
                     image: productInput.image
                 }
+                await updateDoc(docToUpdate!.ref, dataInput);
+
+                // Fetch new item database after update operation
+                this.fetchProductListFromFirebase();
             }
         },
 
-        removeProductFromList(id: number) {
-            const index = this.productList.findIndex(product => product.id === id)
-            if (index !== -1) {
-                this.productList.splice(index, 1)
+        // Remove a product from Firebase
+        async removeProductFromList(productId: number) {
+            const q = query(
+                collection(database, "productList"),
+                where("id", "==", productId)
+            );
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                return null;
+            } else {
+                const docToDelete = querySnapshot.docs[0]
+                await deleteDoc(docToDelete!.ref)
             }
+        },
+
+        // Call Firebase API to get product database
+        async fetchProductListFromFirebase() {
+            // Clear the old product list before fetching from Firebase
+            this.productList.splice(0, this.productList.length)
+
+            const q = query(collection(database, "productList"));
+            const querySnapshot = await getDocs(q);
+
+            querySnapshot.forEach((doc) => {
+                let docData = doc.data()
+
+                let product: Product = {
+                    id: Number(docData.id),
+                    name: docData.name,
+                    price: Number(docData.price),
+                    description: docData.description,
+                    image: docData.image
+                }
+                this.productList.push(product)
+            });
         }
     }
 })

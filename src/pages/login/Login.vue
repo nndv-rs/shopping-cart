@@ -30,7 +30,7 @@ const username = ref('')
 const password = ref('')
 
 // Function for user login
-function login() {
+async function login() {
     // Check for blank input
     if (username.value == "" || password.value == "") {
         showModal({
@@ -41,7 +41,7 @@ function login() {
     } else {
         // Check for correct credentials
         const loginSuccess = authenticationStore.loginUser(username.value, password.value)
-        if (loginSuccess) {
+        if (await loginSuccess) {
             go('/pages/product-list.html')
         } else {
             showModal({
@@ -62,7 +62,7 @@ function login() {
             <h1 class="site-title">ShoppingCart</h1>
         </div>
         <nav class="header-nav">
-            <!-- Empty for now -->
+            <!-- Empty on purpose for now -->
         </nav>
         </header>
         <main class="page-content home-hero">

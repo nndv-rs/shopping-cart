@@ -1,13 +1,11 @@
 import { defineStore } from 'pinia'
 import type { User } from '@/types/User'
 import { useShoppingCartStore } from '@/stores/ShoppingCartStore';
+import { database } from '@/main';
+import { collection, query, where, doc, addDoc, getDocs, updateDoc, deleteDoc } from "firebase/firestore";
 
 export const useAuthenticationStore = defineStore('authenticationStore', {
     state: () => ({
-        userList: [
-            { username: "admin", password: "12345" },
-        ] as User[],
-
         isLoggedIn: false as boolean,
         LoggedInUsername: '' as string,
     }),
@@ -19,36 +17,47 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
     },
 
     actions: {
-        // Register a new user, store the information inside UserList
-        registerNewUser(usernameInput: string, passwordInput: string) {
-            if (usernameInput || passwordInput) {
-                // Check if username already exist
-                const index = this.userList.findIndex(user => user.username === usernameInput);
-                if (index !== -1) {
-                    return 'registerFailedDuplicatedUsername'
-                } else {
-                    let newUser : User = {
-                        username: usernameInput,
-                        password: passwordInput
-                    }
-                    this.userList.push(newUser)
-                    return 'registerSuccess'
-                }                                 
+        // Register a new user, save new user data to Firebase
+        async registerNewUser(usernameInput: string, passwordInput: string) {
+             const q = query(
+                collection(database, "users"),
+                where("username", "==", usernameInput)
+            );
+            const querySnapshot = await getDocs(q);
+
+            // If username is not already taken, continue with the registeration
+            if (querySnapshot.empty) {
+                const newUser: User = {
+                    username: usernameInput,
+                    password: passwordInput
+                }
+                await addDoc(collection(database, "users"), newUser);
+                return 'registerSuccess'
+            } else {
+                return 'registerFailedDuplicatedUsername'
             }
         },
 
-        // Authenticate a user for login
-        loginUser(usernameInput: string, passwordInput: string) {
-            const index = this.userList.findIndex(user => user.username === usernameInput);
-            if (index !== -1) {
-                if (passwordInput === this.userList[index]?.password) {
+        // Authenticate a user credentials for login
+        async loginUser(usernameInput: string, passwordInput: string) {
+            const q = query(
+                collection(database, "users"),
+                where("username", "==", usernameInput)
+            );
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                return null;
+            } else {
+                const userToAuthenticate = querySnapshot.docs[0]?.data() as User;
+                if (userToAuthenticate?.username === usernameInput && userToAuthenticate?.password === passwordInput) {
                     this.isLoggedIn = true;
-                    this.LoggedInUsername = this.userList[index].username
+                    this.LoggedInUsername = userToAuthenticate.username;
                     return true;
                 } else {
                     return false;
                 }
-            }           
+            }
         },
 
         // Logout user and clear the shopping cart

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import '@/assets/css/ComponentProductList.css'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useModal } from '@/composables/useModal'
 import { useProductListStore } from '@/stores/ProductListStore'
@@ -15,7 +15,7 @@ const go = (path: string) => router.push(path)
 
 // Global product list
 const productListStore = useProductListStore()
-const { getProductList, addProductToList } = productListStore
+const { getProductList, addProductToList, fetchProductListFromFirebase } = productListStore
 const productList = getProductList
 
 // Global shopping cart
@@ -36,6 +36,11 @@ const nameInput = ref<string>('');
 const priceInput = ref<number>(1);
 const descriptionInput = ref<string>('');
 const imageInput = ref<string>('');
+
+// Fetch product list from Firebase when loaded
+onMounted(() => {
+    fetchProductListFromFirebase()
+});
 
 // Compute which item to show on the list when there are search queries and filters
 const renderList = computed(() => {
@@ -78,7 +83,7 @@ const renderList = computed(() => {
 })
 
 // Add a product to the product list store
-function addProductToStore() {
+async function addProductToStore() {
     if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "" || imageInput.value == "")) {
         showModal({
             title: 'Invalid Input',
@@ -93,13 +98,20 @@ function addProductToStore() {
             description: descriptionInput.value,
             image: imageInput.value
         }
-        productListStore.addProductToList(newProduct)
-
-        // Reset input fields after adding a new product
-        priceInput.value = 1
-        nameInput.value = ""
-        descriptionInput.value = ""
-        imageInput.value = ""
+        let status = productListStore.addProductToList(newProduct)
+        if (await status) {
+            // Reset input fields after adding a new product
+            priceInput.value = 1
+            nameInput.value = ""
+            descriptionInput.value = ""
+            imageInput.value = ""
+        } else {
+            showModal({
+                title: 'Error',
+                message: 'Failed to add new product. Please try again.',
+                showConfirm: false,
+            }) 
+        }
     }
 }
 
