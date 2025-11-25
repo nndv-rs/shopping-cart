@@ -28,52 +28,62 @@ onMounted(() => {
 
 const username = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 
 // Function for registering a new user
 async function register() {
     // Check for blank input
-    if (username.value == "" || password.value == "") {
+    if (username.value.length < 5 || password.value.length < 5) {
         showModal({
             title: 'Invalid Input',
-            message: 'Username And/Or Password cannot be left blank',
+            message: 'Username and password must be at least 5 characters long.',
             showConfirm: false,
         })
     } else {
-        // Check for registeration status
-        const registerStatus = authenticationStore.registerNewUser(username.value, password.value)
-        switch(await registerStatus) {
-            case 'registerSuccess': // Registeration successful, immediately login into the new account and go to home page
-                showModal({
-                    title: 'User registered',
-                    message: 'New user registered. Logging into your new account ...',
-                    showConfirm: false,
-                })
-                const loginSuccess = authenticationStore.loginUser(username.value, password.value);
-                if (await loginSuccess) {
-                    go('/pages/product-list.html');
-                } else {
+        // Check if Password and Confirm Password are the same
+        if (password.value !== confirmPassword.value) {
+            showModal({
+                title: 'Password confirmation does not match',
+                message: 'Please check your password again.',
+                showConfirm: false,
+            })
+        } else {
+            // Check for registeration status
+            const registerStatus = authenticationStore.registerNewUser(username.value, password.value)
+            switch(await registerStatus) {
+                case 'registerSuccess': // Registeration successful, immediately login into the new account and go to home page
                     showModal({
-                        title: 'Automatic login redirect failed',
-                        message: 'We could not automatically log you in. Please login into your new account manually.',
+                        title: 'User registered',
+                        message: 'New user registered. Logging into your new account ...',
                         showConfirm: false,
                     })
-                }
-                break;
-            case 'registerFailedDuplicatedUsername': // Username already existed in the database
-                showModal({
-                    title: 'Duplicated Username',
-                    message: 'This username already exist. Please choose another username.',
-                    showConfirm: false,
-                })
-                break;
-            default:
-                showModal({ // Fallback error
-                    title: 'Unknown Error',
-                    message: 'An unknown error has occcured. Please try again.',
-                    showConfirm: false,
-                })
-                break;
-        }     
+                    const loginSuccess = authenticationStore.loginUser(username.value, password.value);
+                    if (await loginSuccess) {
+                        go('/pages/product-list.html');
+                    } else {
+                        showModal({
+                            title: 'Automatic login redirect failed',
+                            message: 'We could not automatically log you in. Please login into your new account manually.',
+                            showConfirm: false,
+                        })
+                    }
+                    break;
+                case 'registerFailedDuplicatedUsername': // Username already existed in the database
+                    showModal({
+                        title: 'Duplicated Username',
+                        message: 'This username already exist. Please choose another username.',
+                        showConfirm: false,
+                    })
+                    break;
+                default:
+                    showModal({ // Fallback error
+                        title: 'Unknown Error',
+                        message: 'An unknown error has occcured. Please try again.',
+                        showConfirm: false,
+                    })
+                    break;
+            }
+        }          
     }
 }
 </script>
@@ -106,6 +116,12 @@ async function register() {
                     <label for="password">Password</label>
                     <div class="input-wrapper">
                         <input v-model="password" id="password" type="password" placeholder="Create a password" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <input v-model="confirmPassword" id="password" type="password" placeholder="Retype your password" required />
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Register</button>
