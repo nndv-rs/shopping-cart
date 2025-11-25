@@ -74,8 +74,8 @@ function readIdFromUrl(): number | null {
 }
 
 // Function for adding item to cart
-function addItemToCart(productToAdd: Product) {
-    shoppingCartStore.addItemToCart(productToAdd, amountInput.value)
+async function addItemToCart(productToAdd: Product) {
+    await shoppingCartStore.addItemToCart(productToAdd, amountInput.value)
     showModal({
         title: 'Item added',
         message: 'Your item has been added to the cart.',

@@ -7,7 +7,7 @@ import { useShoppingCartStore } from '@/stores/ShoppingCartStore';
 
 // Global data
 const shoppingCartStore = useShoppingCartStore()
-const { getShoppingCart, removeItemFromCart } = shoppingCartStore
+const { getShoppingCart, removeItemFromCart, initializeCartFromFirebase } = shoppingCartStore
 const shoppingCart = getShoppingCart
 
 // Keep a local input value so edits don't immediately mutate the shopping cart
@@ -51,15 +51,15 @@ function updateAmount(item: ShoppingCartItem) {
         title: 'Confirm Update',
         message: 'Are you sure you want to update this item in your cart?',
         showConfirm: true,
-        onConfirm: () => {
+        onConfirm: async () => {
             const rawInput = quantityInputs[item.product.id];
             const amountInput = parseInt(String(rawInput), 10);
             if (amountInput < 1 || Number.isNaN(amountInput)) {
                 // Enforce minimum 1
                 quantityInputs[item.product.id] = '1';
-                shoppingCartStore.updateItemAmountInCart(item, 1)
+                await shoppingCartStore.updateItemAmountInCart(item, 1)
             } else {
-                shoppingCartStore.updateItemAmountInCart(item, amountInput)
+                await shoppingCartStore.updateItemAmountInCart(item, amountInput)
             }
         }
     })
@@ -71,20 +71,21 @@ function removeItem(item: ShoppingCartItem) {
         title: 'Confirm Deletion',
         message: 'Are you sure you want to remove this item from your cart?',
         showConfirm: true,
-        onConfirm: () => {
-            shoppingCartStore.removeItemFromCart(item)
+        onConfirm: async () => {
+            await shoppingCartStore.removeItemFromCart(item)
         }
     })
 }
 
-    function completeCheckout() {
-        showModal({
-            title: 'Thank you',
-            message: 'Thank you for your purchase! Your order has been placed.',
-            showConfirm: false,
-        })
-        shoppingCart!.splice(0, shoppingCart!.length)
-    }
+async function completeCheckout() {
+    showModal({
+        title: 'Thank you',
+        message: 'Thank you for your purchase! Your order has been placed.',
+        showConfirm: false,
+    })
+    await shoppingCart!.splice(0, shoppingCart!.length)
+    await shoppingCartStore.clearCart()
+}
 </script>
 
 <template>

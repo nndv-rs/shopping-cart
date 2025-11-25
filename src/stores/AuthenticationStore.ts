@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import type { User } from '@/types/User'
 import { useShoppingCartStore } from '@/stores/ShoppingCartStore';
 import { database } from '@/main';
-import { collection, query, where, doc, addDoc, getDocs, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, addDoc, getDocs } from "firebase/firestore";
 
 export const useAuthenticationStore = defineStore('authenticationStore', {
     state: () => ({
@@ -19,7 +19,7 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
     actions: {
         // Register a new user, save new user data to Firebase
         async registerNewUser(usernameInput: string, passwordInput: string) {
-             const q = query(
+            const q = query(
                 collection(database, "users"),
                 where("username", "==", usernameInput)
             );
@@ -53,6 +53,12 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
                 if (userToAuthenticate?.username === usernameInput && userToAuthenticate?.password === passwordInput) {
                     this.isLoggedIn = true;
                     this.LoggedInUsername = userToAuthenticate.username;
+                    
+                    // Initialize the shopping cart for this user
+                    const shoppingCartStore = useShoppingCartStore();
+                    await shoppingCartStore.createUserCartDocument(usernameInput);
+                    await shoppingCartStore.initializeCartFromFirebase(usernameInput);
+                    
                     return true;
                 } else {
                     return false;
@@ -61,11 +67,14 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
         },
 
         // Logout user and clear the shopping cart
-        logoutUser() {
+        async logoutUser() {
             this.isLoggedIn = false;
             this.LoggedInUsername = '';
-            const shoppingCartStore = useShoppingCartStore()
-            shoppingCartStore.clearCart()
+            
+            // Clear the shopping cart locally
+            const shoppingCartStore = useShoppingCartStore();
+            shoppingCartStore.clearCart();
+            shoppingCartStore.$reset();
         }
     }
 })

@@ -22,73 +22,86 @@ export const useProductListStore = defineStore('productListStore', {
             try {
                 await addDoc(collection(database, "productList"), product);
                 this.fetchProductListFromFirebase();
-            } catch {
-                return null;
+                return true;
+            } catch (error) {
+                console.error("Error adding product to list:", error);
             }   
         },
 
         // Update a product details to Firebase
         async updateProductDetails(productInput: Product) {
-            const q = query(
-                collection(database, "productList"),
-                where("id", "==", productInput.id)
-            );
-            const querySnapshot = await getDocs(q);
+            try {
+                const q = query(
+                    collection(database, "productList"),
+                    where("id", "==", productInput.id)
+                );
+                const querySnapshot = await getDocs(q);
 
-            if (querySnapshot.empty) {
-                return null;
-            } else {
-                const docToUpdate = querySnapshot.docs[0]
-                const dataInput = {
-                    id: productInput.id,
-                    name: productInput.name,
-                    price: productInput.price,
-                    description: productInput.description,
-                    image: productInput.image
+                if (querySnapshot.empty) {
+                    return null;
+                } else {
+                    const docToUpdate = querySnapshot.docs[0]
+                    const dataInput = {
+                        id: productInput.id,
+                        name: productInput.name,
+                        price: productInput.price,
+                        description: productInput.description,
+                        image: productInput.image
+                    }
+                    await updateDoc(docToUpdate!.ref, dataInput);
+
+                    // Fetch new item database after update operation
+                    this.fetchProductListFromFirebase();
                 }
-                await updateDoc(docToUpdate!.ref, dataInput);
-
-                // Fetch new item database after update operation
-                this.fetchProductListFromFirebase();
-            }
+            } catch (error) {
+                console.error("Error updating product details:", error);
+            }          
         },
 
         // Remove a product from Firebase
         async removeProductFromList(productId: number) {
-            const q = query(
-                collection(database, "productList"),
-                where("id", "==", productId)
-            );
-            const querySnapshot = await getDocs(q);
+            try {
+                const q = query(
+                    collection(database, "productList"),
+                    where("id", "==", productId)
+                );
+                const querySnapshot = await getDocs(q);
 
-            if (querySnapshot.empty) {
-                return null;
-            } else {
-                const docToDelete = querySnapshot.docs[0]
-                await deleteDoc(docToDelete!.ref)
-            }
+                if (querySnapshot.empty) {
+                    return null;
+                } else {
+                    const docToDelete = querySnapshot.docs[0]
+                    await deleteDoc(docToDelete!.ref)
+                }
+            } catch (error) {
+                console.error("Error removing product from list:", error);
+            }    
         },
 
-        // Call Firebase API to get product database
+        // Call Firebase to fetch product list database
         async fetchProductListFromFirebase() {
             // Clear the old product list before fetching from Firebase
             this.productList.splice(0, this.productList.length)
 
-            const q = query(collection(database, "productList"));
-            const querySnapshot = await getDocs(q);
+            try {
+                const q = query(collection(database, "productList"));
+                const querySnapshot = await getDocs(q);
 
-            querySnapshot.forEach((doc) => {
-                let docData = doc.data()
+                querySnapshot.forEach((doc) => {
+                    let docData = doc.data()
 
-                let product: Product = {
-                    id: Number(docData.id),
-                    name: docData.name,
-                    price: Number(docData.price),
-                    description: docData.description,
-                    image: docData.image
-                }
-                this.productList.push(product)
-            });
+                    let product: Product = {
+                        id: Number(docData.id),
+                        name: docData.name,
+                        price: Number(docData.price),
+                        description: docData.description,
+                        image: docData.image
+                    }
+                    this.productList.push(product)
+                });
+            } catch (error) {
+                console.error("Error fetching product from Firebase:", error);
+            }
         }
     }
 })

@@ -116,11 +116,11 @@ async function addProductToStore() {
 }
 
 // Add a single item to cart when clicking "Add to Cart" button on ProductList page
-function addSingleItemToCart(productId: number) {
+async function addSingleItemToCart(productId: number) {
     let index = productList.findIndex(product => product.id === productId)
     if (index !== -1) {
         let productToAdd = productList[index];
-        shoppingCartStore.addItemToCart(productToAdd!, 1)
+        await shoppingCartStore.addItemToCart(productToAdd!, 1)
         showModal({
             title: 'Item added',
             message: 'Your item has been added to the cart.',
