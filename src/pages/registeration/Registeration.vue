@@ -32,7 +32,7 @@ const confirmPassword = ref('')
 
 // Function for registering a new user
 function register() {
-    // Check for blank input
+    // Check for username and password minimum length
     if (username.value.length < 5 || password.value.length < 5) {
         showModal({
             title: 'Invalid Input',
