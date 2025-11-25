@@ -112,7 +112,7 @@ function register() {
                 <div class="form-group">
                     <label for="password">Confirm Password</label>
                     <div class="input-wrapper">
-                        <input v-model="confirmPassword" id="confirm-password" type="password" placeholder="Retype your password" required />
+                        <input v-model="confirmPassword" id="password-confirm" type="password" placeholder="Retype your password" required />
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Register</button>
