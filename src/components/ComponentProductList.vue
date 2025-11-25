@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import '@/assets/css/ComponentProductList.css'
-import { computed, ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useModal } from '@/composables/useModal'
 import { useProductListStore } from '@/stores/ProductListStore'
@@ -8,6 +8,8 @@ import { useShoppingCartStore } from '@/stores/ShoppingCartStore'
 import ComponentSearch from './ComponentSearch.vue';
 import ComponentSort from './ComponentSort.vue';
 import type { Product } from '@/types/Product';
+import { database } from '@/main';
+import { collection, query, getDocs, orderBy, or, where } from 'firebase/firestore'
 
 // Routing
 const router = useRouter()
@@ -26,9 +28,12 @@ const shoppingCart = getShoppingCart
 // Modal
 const { showModal } = useModal()
 
+// Render List
+const renderList = ref<Product[]>([])
+
 // Sort and search parameters
 const sortKey = ref<keyof Product | null>(null);      
-const sortDirection = ref<'ASC' | 'DES' | null>(null); 
+const sortDirection = ref<'asc' | 'desc' | null>(null); 
 const searchText = ref<string>("");
 
 // Input to create new product
@@ -40,47 +45,54 @@ const imageInput = ref<string>('');
 // Fetch product list from Firebase when loaded
 onMounted(() => {
     fetchProductListFromFirebase()
+    renderList.value = productList
 });
 
-// Compute which item to show on the list when there are search queries and filters
-const renderList = computed(() => {
-    let productsToRender = productList
+// Query Firebase for sorted documents
+async function querySortColumn(sortKey: string, sortDirection: "asc" | "desc") {
+    const q = query(
+        collection(database, "productList"),
+        orderBy(sortKey, sortDirection)
+    );
+    const querySnapshot = await getDocs(q)
 
-    // If there are no search query or filter, show all items
-    if (!searchText.value && sortKey.value === null) {
-        return productsToRender;
-    }
-
-    // Filter list by search query
-    if (searchText.value) {
-        productsToRender = productList!.filter(product => 
-            product.name.toLowerCase().includes(searchText.value.toLowerCase()) ||
-            product.description.toLowerCase().includes(searchText.value.toLowerCase())
-        )
-    }
-
-    // Sort the narrowed down list, numerical value for price, alphabetical for everything else
-    if (sortKey.value) {
-        if (sortKey.value == "price") {
-            if (sortDirection.value == "ASC") {
-                productsToRender!.sort((a, b) => a.price - b.price);
-            }
-            if (sortDirection.value == "DES") {
-                productsToRender!.sort((a, b) => b.price - a.price);
-            }
-        } else {
-            const key = sortKey.value;
-            if (sortDirection.value == "ASC") {
-                productsToRender!.sort((a, b) => (a[key] as string).localeCompare(b[key] as string));
-            }
-            if (sortDirection.value == "DES") {
-                productsToRender!.sort((a, b) => -(a[key] as string).localeCompare(b[key] as string));
-            }
-        }
-    }
-
+    const productsToRender: Product[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+            id: Number(data.id),
+            name: data.name,
+            price: Number(data.price),
+            description: data.description,
+            image: data.image,
+        };
+    });
     return productsToRender;
-})
+}
+
+// Query Firebase for exact matching item Name or Description
+// Firebase currently do not directly support partial matches, requires a workaround
+async function querySearch(searchText: string) {
+     const q = query(
+        collection(database, "productList"),
+        or(
+            where("name", "==", searchText),
+            where("description", "==", searchText)
+        )
+    );
+    const querySnapshot = await getDocs(q)
+
+    const productsToRender: Product[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+            id: Number(data.id),
+            name: data.name,
+            price: Number(data.price),
+            description: data.description,
+            image: data.image,
+        };
+    });
+    return productsToRender;
+}
 
 // Add a product to the product list store
 async function addProductToStore() {
@@ -140,18 +152,36 @@ function viewProductDetails(productId: number) {
     go(`/pages/product-details.html?id=${productId}`);
 }
 
-// Handle for search box text updates
-function handleSearchUpdate(message: string) {
-    searchText.value = message;
+// Handle for search text submit
+async function handleSearchSubmit(searchText: string) {
+    // If clicking Search when text box is empty, show all products
+    if (searchText == '') {
+        renderList.value = productList
+    } else {
+        try {
+            renderList.value = await querySearch(searchText)
+        } catch (error) {
+            console.error("Error submitting search request to Firebase:", error);
+        }
+    }  
 }
 
 // Handle for sort button updates
-function handleSortUpdate(message: string) {
+async function handleSortUpdate(message: string) {
     sortKey.value = message as keyof Product;
-    if (sortDirection.value === null || sortDirection.value === "DES") {
-        sortDirection.value = "ASC";
+    if (sortDirection.value === null || sortDirection.value === "desc") {
+        sortDirection.value = "asc";
     } else {
-        sortDirection.value = "DES";
+        sortDirection.value = "desc";
+    }
+
+    // Clear old render list before query for sorted documents from Firebase
+    renderList.value = []
+
+    try {
+        renderList.value = await querySortColumn(sortKey.value, sortDirection.value)
+    } catch (error) {
+        console.error("Error fetching sorted data from Firebase:", error);
     }
 }
 </script>
@@ -161,7 +191,7 @@ function handleSortUpdate(message: string) {
         <div class="pl-header">
             <h2 class="pl-title">Products</h2>
             <div class="pl-controls">
-                <ComponentSearch @updateSearch="handleSearchUpdate" />
+                <ComponentSearch @submitSearch="handleSearchSubmit"/>
             </div>
         </div>
 

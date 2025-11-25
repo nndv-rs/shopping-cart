@@ -67,7 +67,7 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
         },
 
         // Logout user and clear the shopping cart
-        async logoutUser() {
+        logoutUser() {
             this.isLoggedIn = false;
             this.LoggedInUsername = '';
             

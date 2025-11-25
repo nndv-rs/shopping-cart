@@ -6,15 +6,16 @@ import type { PropType } from 'vue'
 const props = defineProps({
     label: { type: String, required: true },
     currentSortKey: { type: String as PropType<string | null>, default: null },
-    currentSortDirection: { type: String as PropType<'ASC' | 'DES' | null>, default: null }
+    currentSortDirection: { type: String as PropType<'asc' | 'desc' | null>, default: null }
 });
 
 const emit = defineEmits(['updateSort'])
 
+// Search icon toggling
 const icon = computed(() => {
     if (props.currentSortKey !== props.label) return '';
-    if (props.currentSortDirection === 'ASC') return '▲';
-    if (props.currentSortDirection === 'DES') return '▼';
+    if (props.currentSortDirection === 'asc') return '▲';
+    if (props.currentSortDirection === 'desc') return '▼';
     return '';
 })
 
