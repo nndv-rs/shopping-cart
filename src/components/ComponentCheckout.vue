@@ -7,7 +7,7 @@ import { useShoppingCartStore } from '@/stores/ShoppingCartStore';
 
 // Global data
 const shoppingCartStore = useShoppingCartStore()
-const { getShoppingCart, removeItemFromCart, initializeCartFromFirebase } = shoppingCartStore
+const { getShoppingCart, removeItemFromCart } = shoppingCartStore
 const shoppingCart = getShoppingCart
 
 // Keep a local input value so edits don't immediately mutate the shopping cart
@@ -77,14 +77,15 @@ function removeItem(item: ShoppingCartItem) {
     })
 }
 
+// Checkout items, clear the shopping cart afterwards
 async function completeCheckout() {
     showModal({
         title: 'Thank you',
         message: 'Thank you for your purchase! Your order has been placed.',
         showConfirm: false,
     })
-    await shoppingCart!.splice(0, shoppingCart!.length)
-    await shoppingCartStore.clearCart()
+    shoppingCart!.splice(0, shoppingCart!.length)
+    shoppingCartStore.clearCartCheckout()
 }
 </script>
 

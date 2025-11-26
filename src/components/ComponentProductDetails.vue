@@ -20,6 +20,9 @@ const shoppingCartStore = useShoppingCartStore()
 const { getShoppingCart } = shoppingCartStore
 const shoppingCart = getShoppingCart
 
+// Lock state for buttons
+const buttonLock = ref<boolean>(false);
+
 // Product to show
 const product = ref<Product | null>(null);
 
@@ -75,16 +78,30 @@ function readIdFromUrl(): number | null {
 
 // Function for adding item to cart
 async function addItemToCart(productToAdd: Product) {
-    await shoppingCartStore.addItemToCart(productToAdd, amountInput.value)
-    showModal({
-        title: 'Item added',
-        message: 'Your item has been added to the cart.',
-        showConfirm: false,
-    })
+    if (buttonLock.value == true) { // Ignore multiple clicks
+        return;
+    } 
+    buttonLock.value = true // Lock the button upon click
+
+    try {
+        await shoppingCartStore.addItemToCart(productToAdd, amountInput.value)
+        showModal({
+            title: 'Item added',
+            message: 'Your item has been added to the cart.',
+            showConfirm: false,
+        })
+    } finally {
+        buttonLock.value = false // Release button lock when operation ends
+    }
 }
 
 // Function for updating a product details
-function updateProductDetails() {
+async function updateProductDetails() {
+    if (buttonLock.value == true) { // Ignore multiple clicks
+        return;
+    } 
+    buttonLock.value = true // Lock the button upon click
+
     let productId = Number(product.value?.id);
     if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "")) {
         showModal({
@@ -92,40 +109,53 @@ function updateProductDetails() {
             message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
             showConfirm: false,
         })
+        buttonLock.value = false
     } else {
-        showModal({
-            title: 'Confirm Update',
-            message: 'Are you sure you want to update this item details and save it to the database ?',
-            showConfirm: true,
-            onConfirm: () => {
-                let productInput : Product = {
-                    id : productId,
-                    name: nameInput.value,
-                    price: Number(priceInput.value),
-                    description: descriptionInput.value,
-                    image: imageInput.value
-                } 
-                productListStore.updateProductDetails(productInput)
-                // Close editor after update
-                showEditor.value = false              
-            }
-        })         
+        try {
+            showModal({
+                title: 'Confirm Update',
+                message: 'Are you sure you want to update this item details and save it to the database ?',
+                showConfirm: true,
+                onConfirm: async () => {
+                    let productInput : Product = {
+                        id : productId,
+                        name: nameInput.value,
+                        price: Number(priceInput.value),
+                        description: descriptionInput.value,
+                        image: imageInput.value
+                    } 
+                    await productListStore.updateProductDetails(productInput)
+                    // Close editor after update
+                    showEditor.value = false                   
+                }
+            }) 
+        } finally {
+            buttonLock.value = false // Release button lock when operation ends
+        }     
     }
  }
 
-
 // Function for deletring a product from the list
-function deleteProduct() {
-    showModal({
-        title: 'Confirm Delete',
-        message: 'Are you sure you want to delete this item from the database?',
-        showConfirm: true,
-        onConfirm: () => {
-            let productId = Number(product.value?.id);
-            productListStore.removeProductFromList(productId);
-            go(`/pages/product-list.html`); // Redirect back to Product List page
-        }
-    })
+async function deleteProduct() {
+    if (buttonLock.value == true) { // Ignore multiple clicks
+        return;
+    } 
+    buttonLock.value = true // Lock the button upon click
+
+    try {
+        showModal({
+            title: 'Confirm Delete',
+            message: 'Are you sure you want to delete this item from the database?',
+            showConfirm: true,
+            onConfirm: async () => {
+                let productId = Number(product.value?.id);
+                await productListStore.removeProductFromList(productId);
+                go(`/pages/product-list.html`); // Redirect back to Product List page
+            }
+        })
+    } finally {
+        buttonLock.value = false // Release button lock when operation ends
+    }
 }
 
 // Editor modal controls, upon opening the modal, pre-fill with existing information
@@ -169,8 +199,8 @@ function confirmDelete() {
                             v-model="amountInput"
                             class="qty-input"
                         />
-                        <button class="btn primary" @click="addItemToCart(product)">Add to Cart</button>
-                        <button class="btn" @click="openEditor">Edit Details</button>
+                        <button class="btn primary" :disabled="buttonLock" @click="addItemToCart(product)">Add to Cart</button>
+                        <button class="btn" :disabled="buttonLock" @click="openEditor">Edit Details</button>
                     </div>
                 </div>
             </aside>
@@ -206,10 +236,10 @@ function confirmDelete() {
                             </div>
                         </div>
                         <footer class="modal-actions">
-                            <button class="btn danger" @click="confirmDelete">Delete</button>
+                            <button class="btn danger" :disabled="buttonLock" @click="confirmDelete">Delete</button>
                             <div style="flex:1"></div>
-                            <button class="btn" @click="closeEditor">Cancel</button>
-                            <button class="btn" @click="updateProductDetails">Apply Changes</button>
+                            <button class="btn" :disabled="buttonLock" @click="closeEditor">Cancel</button>
+                            <button class="btn" :disabled="buttonLock" @click="updateProductDetails">Apply Changes</button>
                         </footer>
                     </div>
                 </div>

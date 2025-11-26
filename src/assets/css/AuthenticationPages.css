@@ -19,6 +19,7 @@
 .form-group input:focus { outline: none; background: white; border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1); }
 .form-group input:hover { border-color: #cbd5e1; }
 .btn { padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.btn:disabled { opacity: 70% }
 .btn-primary { background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%); color: white; width: 100%; margin-top: 8px; }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(124, 58, 237, 0.3); }
 .btn-primary:active { transform: translateY(0); }

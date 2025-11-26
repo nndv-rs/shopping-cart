@@ -103,6 +103,12 @@
     color: white;
 }
 
+.btn:disabled,
+.btn.primary:disabled,
+.btn.danger:disabled {
+    opacity: 70%;
+}
+
 .btn.danger {
     background-color: #ef4444;
     color: white;

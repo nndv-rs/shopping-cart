@@ -15,6 +15,9 @@ const { getLoginStatus } = authenticationStore
 
 const loggedInStatus = ref<boolean>(false)
 
+// Lock state for buttons
+const buttonLock = ref<boolean>(false);
+
 // Modal
 const { showModal } = useModal();
 
@@ -31,25 +34,34 @@ const password = ref('')
 
 // Function for user login
 async function login() {
-    // Check for blank input
-    if (username.value == "" || password.value == "") {
-        showModal({
-            title: 'Invalid Input',
-            message: 'Username And/Or Password cannot be left blank',
-            showConfirm: false,
-        })
-    } else {
-        // Check for correct credentials
-        const loginSuccess = authenticationStore.loginUser(username.value, password.value)
-        if (await loginSuccess) {
-            go('/pages/product-list.html')
-        } else {
+    if (buttonLock.value == true) { // Ignore multiple clicks
+        return;
+    } 
+    buttonLock.value = true // Lock the button upon click
+
+    try {
+        // Check for blank input
+        if (username.value == "" || password.value == "") {
             showModal({
-                title: 'Invalid Credentials',
-                message: 'Username And/Or Password is incorrect, please try again.',
+                title: 'Invalid Input',
+                message: 'Username And/Or Password cannot be left blank',
                 showConfirm: false,
             })
+        } else {
+            // Check for correct credentials
+            const loginSuccess = authenticationStore.loginUser(username.value, password.value)
+            if (await loginSuccess) {
+                go('/pages/product-list.html')
+            } else {
+                showModal({
+                    title: 'Invalid Credentials',
+                    message: 'Username And/Or Password is incorrect, please try again.',
+                    showConfirm: false,
+                })
+            }
         }
+    } finally {
+        buttonLock.value = false // Release button lock when operation ends
     }
 }
 
@@ -85,8 +97,8 @@ async function login() {
                         <input v-model="password" id="password" type="password" placeholder="Enter your password" required />
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Login</button>
-                <button class="btn btn-primary"  @click="go('/pages/registeration.html')">New User ?</button>
+                <button type="submit" class="btn btn-primary" :disabled="buttonLock">Login</button>
+                <button class="btn btn-primary" :disabled="buttonLock" @click="go('/pages/registeration.html')">New User ?</button>
             </form>
         </section>
         </main>

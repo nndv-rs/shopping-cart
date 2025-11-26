@@ -1,4 +1,4 @@
-import { createApp, provide } from 'vue';
+import { createApp } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import { createPinia } from 'pinia'
 import App from './App.vue';
@@ -8,15 +8,14 @@ import ProductDetails from './pages/product-details/ProductDetails.vue';
 import Registeration from './pages/registeration/Registeration.vue';
 import Login from './pages/login/Login.vue';
 
-// FIREBASE ------------------------------------------------------------
+// FIREBASE SDK --------------------------------------------------------
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
 const firebaseConfig = {
     apiKey: "AIzaSyBiyTX_J38e7gsVzLyJ6sJy9UnGN33jkLk",
     authDomain: "vue-js-shopping-cart-exercise.firebaseapp.com",
@@ -29,9 +28,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
-const database = getFirestore(firebaseApp)
+const database = getFirestore(firebaseApp);
 
-export {firebaseApp, database}
+export { firebaseApp, database }
 // ---------------------------------------------------------------------
 
 const routes = [

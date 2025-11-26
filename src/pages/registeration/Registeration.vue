@@ -18,6 +18,9 @@ const loggedInStatus = ref<boolean>(false)
 // Modal
 const { showModal } = useModal();
 
+// Lock state for buttons
+const buttonLock = ref<boolean>(false);
+
 // Redirect to product list page if user is already logged in
 onMounted(() => {
     loggedInStatus.value = authenticationStore.getLoginStatus
@@ -32,58 +35,73 @@ const confirmPassword = ref('')
 
 // Function for registering a new user
 async function register() {
-    // Check for blank input
-    if (username.value.length < 5 || password.value.length < 5) {
-        showModal({
+    if (buttonLock.value == true) { // Ignore multiple clicks
+        return;
+    } 
+    buttonLock.value = true // Lock the button upon click
+
+    // Username and password must be at least 5 characters long
+	if (username.value.length < 5 || password.value.length < 5) {
+		showModal({
             title: 'Invalid Input',
             message: 'Username and password must be at least 5 characters long.',
             showConfirm: false,
         })
-    } else {
-        // Check if Password and Confirm Password are the same
-        if (password.value !== confirmPassword.value) {
-            showModal({
-                title: 'Password confirmation does not match',
-                message: 'Please check your password again.',
-                showConfirm: false,
-            })
-        } else {
-            // Check for registeration status
-            const registerStatus = authenticationStore.registerNewUser(username.value, password.value)
-            switch(await registerStatus) {
-                case 'registerSuccess': // Registeration successful, immediately login into the new account and go to home page
-                    showModal({
-                        title: 'User registered',
-                        message: 'New user registered. Logging into your new account ...',
+        buttonLock.value = false
+		return;
+	}
+	
+	// Check if "Password" and "Confirm Password" matches
+	if (password.value !== confirmPassword.value) {
+        showModal({
+            title: 'Password confirmation does not match',
+            message: 'Please check your password again.',
+            showConfirm: false,
+        })
+        buttonLock.value = false
+		return;
+	}
+
+    try {
+        // Check for registeration status
+        const registerStatus = authenticationStore.registerNewUser(username.value, password.value)
+        switch(await registerStatus) {
+            case 'registerSuccess': // Registeration successful, attempt to login into the new account and go to home page
+                showModal({
+                    title: 'User registered',
+                    message: 'New user registered. Logging into your new account ...',
+                    showConfirm: false,
+                })
+                const loginSuccess = authenticationStore.loginUser(username.value, password.value);
+                if (await loginSuccess) {
+                    go('/pages/product-list.html');
+                } else {
+                    // If automatic login failed, redirect user to login page
+                    showModal({ 
+                        title: 'Automatic login redirect failed',
+                        message: 'We could not automatically log you in. Please login into your new account manually.',
                         showConfirm: false,
                     })
-                    const loginSuccess = authenticationStore.loginUser(username.value, password.value);
-                    if (await loginSuccess) {
-                        go('/pages/product-list.html');
-                    } else {
-                        showModal({
-                            title: 'Automatic login redirect failed',
-                            message: 'We could not automatically log you in. Please login into your new account manually.',
-                            showConfirm: false,
-                        })
-                    }
-                    break;
-                case 'registerFailedDuplicatedUsername': // Username already existed in the database
-                    showModal({
-                        title: 'Duplicated Username',
-                        message: 'This username already exist. Please choose another username.',
-                        showConfirm: false,
-                    })
-                    break;
-                default:
-                    showModal({ // Fallback error
-                        title: 'Unknown Error',
-                        message: 'An unknown error has occcured. Please try again.',
-                        showConfirm: false,
-                    })
-                    break;
-            }
-        }          
+                    go('/pages/login.html')                 
+                }
+                break;
+            case 'registerFailedDuplicatedUsername': // Username already existed in the database
+                showModal({
+                    title: 'Duplicated Username',
+                    message: 'This username already exist. Please choose another username.',
+                    showConfirm: false,
+                })
+                break;
+            default:
+                showModal({ // Fallback error
+                    title: 'Unknown Error',
+                    message: 'An unknown error has occcured. Please try again.',
+                    showConfirm: false,
+                })
+                break;
+        }
+    } finally {
+        buttonLock.value = false // Release button lock when operation ends
     }
 }
 </script>
@@ -124,8 +142,8 @@ async function register() {
                         <input v-model="confirmPassword" id="password-confirm" type="password" placeholder="Retype your password" required />
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Register</button>
-                <button class="btn btn-primary"  @click="go('/pages/login.html')">Already have an account ?</button>
+                <button type="submit" class="btn btn-primary" :disabled="buttonLock">Register</button>
+                <button class="btn btn-primary" :disabled="buttonLock" @click="go('/pages/login.html')">Already have an account ?</button>
             </form>
         </section>
         </main>

@@ -91,7 +91,7 @@ export const useProductListStore = defineStore('productListStore', {
                     let docData = doc.data()
 
                     let product: Product = {
-                        id: Number(docData.id),
+                        id: Number(docData.id), // NOTE: This is the product id, not the Firebase document id
                         name: docData.name,
                         price: Number(docData.price),
                         description: docData.description,

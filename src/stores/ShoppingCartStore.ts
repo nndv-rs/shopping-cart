@@ -15,60 +15,37 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
     },
 
     actions: {
-        // Initialize cart from Firebase for the user after logging in
+        // Initialize Shopping Cart from Firebase for the logged in user
         async initializeCartFromFirebase(username: string) {
             try {
-                // Query for the user's shopping cart document
                 const q = query(
                     collection(database, "shoppingCart"),
                     where("username", "==", username)
                 );
                 const querySnapshot = await getDocs(q);
-                
-                if (!querySnapshot.empty) {
-                    const userDoc = querySnapshot.docs[0];
-                    if (userDoc) {
-                        this.currentUserDocId = userDoc.id;
-                        const data = userDoc.data();
-                        this.shoppingCart = data.items || [];
-                    }
-                } else {
-                    // Create a new shopping cart for this user if it doesn't exist
-                    this.currentUserDocId = '';
-                    this.shoppingCart = [];
-                }
-            } catch (error) {
-                console.error("Error initializing cart from Firebase:", error);
-                this.shoppingCart = [];
-            }
-        },
 
-        // Create a new user shopping cart document in Firebase
-        async createUserCartDocument(username: string) {
-            try {
-                // Check if user already has a cart
-                const q = query(
-                    collection(database, "shoppingCart"),
-                    where("username", "==", username)
-                );
-                const querySnapshot = await getDocs(q);
-                
+                // Create new shopping cart document for the user if there isn't one yet
                 if (querySnapshot.empty) {
-                    // Create new shopping cart document for the user if there isn't one yet
                     const docRef = doc(collection(database, "shoppingCart"));
                     await setDoc(docRef, {
                         username: username,
                         items: [],
                     });
                     this.currentUserDocId = docRef.id;
-                } else {
-                    const firstDoc = querySnapshot.docs[0];
-                    if (firstDoc) {
-                        this.currentUserDocId = firstDoc.id;
-                    }
+                    this.shoppingCart = [];
+
+                // Else use the existing document
+                } else {            
+                    const userDoc = querySnapshot.docs[0];
+                    const data = userDoc!.data()
+                    
+                    this.currentUserDocId = userDoc!.id;
+                    this.shoppingCart = data!.items || [];
                 }
+
             } catch (error) {
-                console.error("Error creating cart document:", error);
+                console.error("Error initializing cart from Firebase:", error);
+                this.shoppingCart = []; // Use empty cart if there's an error
             }
         },
 
@@ -125,8 +102,14 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
         },
 
         // Clear the shopping cart locally, in the event another user log in on the same device
-        clearCart() {
+        clearCartLocal() {
             this.shoppingCart.splice(0, this.shoppingCart.length)
+        },
+
+        // Clear the shopping cart both locally and on Firebase when clicking Checkout
+        async clearCartCheckout() {
+            this.shoppingCart.splice(0, this.shoppingCart.length)
+            await this.syncCartToFirebase();
         },
 
         // Sync the current shopping cart state to Firebase

@@ -78,6 +78,11 @@
     width: 85.5%;
 }
 
+.add-btn:disabled,
+.details-btn:disabled {
+    opacity: 70%;
+}
+
 .input {
     padding: 8px 10px;
     border-radius: 8px;

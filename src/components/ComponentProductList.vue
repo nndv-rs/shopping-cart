@@ -28,6 +28,9 @@ const shoppingCart = getShoppingCart
 // Modal
 const { showModal } = useModal()
 
+// Lock state for buttons
+const buttonLock = ref<boolean>(false);
+
 // Render List
 const renderList = ref<Product[]>([])
 
@@ -44,126 +47,86 @@ const imageInput = ref<string>('');
 
 // Fetch product list from Firebase when loaded
 onMounted(() => {
-    fetchProductListFromFirebase()
+    productListStore.fetchProductListFromFirebase()
     renderList.value = productList
 });
 
-// Query Firebase for sorted documents
-async function querySortColumn(sortKey: string, sortDirection: "asc" | "desc") {
-    const q = query(
-        collection(database, "productList"),
-        orderBy(sortKey, sortDirection)
-    );
-    const querySnapshot = await getDocs(q)
-
-    const productsToRender: Product[] = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-            id: Number(data.id),
-            name: data.name,
-            price: Number(data.price),
-            description: data.description,
-            image: data.image,
-        };
-    });
-    return productsToRender;
-}
-
-// Query Firebase for exact matching item Name or Description
-// Firebase currently do not directly support partial matches, requires a workaround
-async function querySearch(searchText: string) {
-     const q = query(
-        collection(database, "productList"),
-        or(
-            where("name", "==", searchText),
-            where("description", "==", searchText)
-        )
-    );
-    const querySnapshot = await getDocs(q)
-
-    const productsToRender: Product[] = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-            id: Number(data.id),
-            name: data.name,
-            price: Number(data.price),
-            description: data.description,
-            image: data.image,
-        };
-    });
-    return productsToRender;
-}
-
 // Add a product to the product list store
 async function addProductToStore() {
+    if (buttonLock.value == true) { // Ignore multiple clicks
+        return;
+    } 
+    buttonLock.value = true // Lock the button upon click
+
     if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "" || imageInput.value == "")) {
         showModal({
             title: 'Invalid Input',
             message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
             showConfirm: false,
         })
+        buttonLock.value = false
     } else {
-        let newProduct: Product = {
-            id: Math.floor(Math.random() * 100000),
-            name: nameInput.value,
-            price: Number(priceInput.value),
-            description: descriptionInput.value,
-            image: imageInput.value
-        }
-        let status = productListStore.addProductToList(newProduct)
-        if (await status) {
-            // Reset input fields after adding a new product
-            priceInput.value = 1
-            nameInput.value = ""
-            descriptionInput.value = ""
-            imageInput.value = ""
-        } else {
-            showModal({
-                title: 'Error',
-                message: 'Failed to add new product. Please try again.',
-                showConfirm: false,
-            }) 
+        try {
+            let newProduct: Product = {
+                id: Math.floor(Math.random() * 100000),
+                name: nameInput.value,
+                price: Number(priceInput.value),
+                description: descriptionInput.value,
+                image: imageInput.value
+            }
+
+            let status = productListStore.addProductToList(newProduct)
+            if (await status) {
+                // Reset input fields after adding a new product
+                priceInput.value = 1
+                nameInput.value = ""
+                descriptionInput.value = ""
+                imageInput.value = ""
+            } else {
+                showModal({
+                    title: 'Error',
+                    message: 'Failed to add new product. Please try again.',
+                    showConfirm: false,
+                }) 
+            }
+        } finally {
+            buttonLock.value = false; // Release button lock when operation ends
         }
     }
 }
 
 // Add a single item to cart when clicking "Add to Cart" button on ProductList page
 async function addSingleItemToCart(productId: number) {
-    let index = productList.findIndex(product => product.id === productId)
-    if (index !== -1) {
-        let productToAdd = productList[index];
-        await shoppingCartStore.addItemToCart(productToAdd!, 1)
-        showModal({
-            title: 'Item added',
-            message: 'Your item has been added to the cart.',
-            showConfirm: false,
-        })
-    } else {
-        showModal({
-            title: 'Error',
-            message: 'An error has occured, please try again.',
-            showConfirm: false,
-        })
+    if (buttonLock.value == true) { // Ignore multiple clicks
+        return;
+    } 
+    buttonLock.value = true // Lock the button upon click
+
+    try {
+        let index = productList.findIndex(product => product.id === productId)
+        if (index !== -1) {
+            let productToAdd = productList[index];
+            await shoppingCartStore.addItemToCart(productToAdd!, 1)
+            showModal({
+                title: 'Item added',
+                message: 'Your item has been added to the cart.',
+                showConfirm: false,
+            })
+        } else {
+            showModal({
+                title: 'Error',
+                message: 'An error has occured, please try again.',
+                showConfirm: false,
+            })
+        }
+    } finally {
+        buttonLock.value = false; // Release button lock when operation ends
     }
 }
     
 // Handle routing to the correct product detail page
 function viewProductDetails(productId: number) {
     go(`/pages/product-details.html?id=${productId}`);
-}
-
-// Handle for search text submit
-async function handleSearchSubmit(searchText: string) {
-    // If clicking Search when text box is empty, show all products
-    if (searchText == '') {
-        renderList.value = productList
-    } else {
-        try {
-            renderList.value = await querySearch(searchText)
-        } catch (error) {
-            console.error("Error submitting search request to Firebase:", error);
-        }
-    }  
 }
 
 // Handle for sort button updates
@@ -183,6 +146,66 @@ async function handleSortUpdate(message: string) {
     } catch (error) {
         console.error("Error fetching sorted data from Firebase:", error);
     }
+}
+
+// Handle for search text submit
+async function handleSearchSubmit(searchText: string) {
+    // If clicking Search when text box is empty, show all previous products
+    if (searchText == '') {
+        renderList.value = productList
+    } else {
+        try {
+            renderList.value = await querySearch(searchText)
+        } catch (error) {
+            console.error("Error submitting search request to Firebase:", error);
+        }
+    }  
+}
+
+// Query Firebase for sorted documents
+async function querySortColumn(sortKey: string, sortDirection: "asc" | "desc") {
+    const q = query(
+        collection(database, "productList"),
+        orderBy(sortKey, sortDirection)
+    );
+    const querySnapshot = await getDocs(q)
+
+    const productsToRender: Product[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+            id: Number(data.id), // NOTE: This is the product id, not the Firebase document id
+            name: data.name,
+            price: Number(data.price),
+            description: data.description,
+            image: data.image,
+        };
+    });
+    return productsToRender;
+}
+
+// Query Firebase for EXACT matching item Name or Description
+// Firebase Firestore currently do not natively support partial matches and requires a workaround (Ex: Algolia)
+async function querySearch(searchText: string) {
+    const q = query(
+        collection(database, "productList"),
+        or(
+            where("name", "==", searchText),
+            where("description", "==", searchText),
+        )
+    );
+    const querySnapshot = await getDocs(q)
+
+    const productsToRender: Product[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+            id: Number(data.id), // NOTE: This is the product id, not the Firebase document id
+            name: data.name,
+            price: Number(data.price),
+            description: data.description,
+            image: data.image,
+        };
+    });
+    return productsToRender;
 }
 </script>
 
@@ -211,8 +234,8 @@ async function handleSortUpdate(message: string) {
                         <td class="price-col">$ {{ product.price }}</td>
                         <td class="desc-col">{{ product.description }}</td>
                         <td class="actions-col">
-                            <button class="details-btn" @click="viewProductDetails(product.id)">View Details</button>
-                            <button class="details-btn" @click="addSingleItemToCart(product.id)">Add To Cart</button>
+                            <button class="details-btn" :disabled="buttonLock" @click="viewProductDetails(product.id)">View Details</button>
+                            <button class="details-btn" :disabled="buttonLock" @click="addSingleItemToCart(product.id)">Add To Cart</button>
                         </td>
                     </tr>
                 </tbody>
@@ -222,7 +245,7 @@ async function handleSortUpdate(message: string) {
                         <td><input class="input" type="number" min="1" v-model="priceInput" @input="priceInput = Math.max(1, priceInput || 0)"></input></td>
                         <td><input class="input" type="text" v-model="descriptionInput" placeholder="Short description" required></input></td>
                         <td class="actions-col">
-                            <button class="add-btn" @click="addProductToStore">Add Product</button>
+                            <button class="add-btn" :disabled="buttonLock" @click="addProductToStore">Add Product</button>
                         </td>
                     </tr>
                     <tr>
