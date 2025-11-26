@@ -20,15 +20,11 @@ const loggedInUsername = ref<string>('')
 // Modal
 const { showModal } = useModal();
 
-// Verify login status before loading
+// Get username to display on the top navigation bar
 onMounted(() => {
-    if (!authenticationStore.getLoginStatus) {
-        go('/pages/login.html')        
-    } else {
-        loggedInStatus.value = getLoginStatus
-        if (loggedInStatus.value == true) {
-            loggedInUsername.value = authenticationStore.getLoggedInUsername
-        }
+    loggedInStatus.value = getLoginStatus
+    if (loggedInStatus.value == true) {
+        loggedInUsername.value = authenticationStore.getLoggedInUsername
     }
 });
 

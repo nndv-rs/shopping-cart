@@ -11,23 +11,12 @@ const go = (path: string) => router.push(path);
 
 // Global data
 const authenticationStore = useAuthenticationStore()
-const { getLoginStatus } = authenticationStore
-
-const loggedInStatus = ref<boolean>(false)
-
-// Lock state for buttons
-const buttonLock = ref<boolean>(false);
 
 // Modal
 const { showModal } = useModal();
 
-// Redirect to product list page if user is already logged in
-onMounted(() => {
-    loggedInStatus.value = authenticationStore.getLoginStatus
-    if (loggedInStatus.value == true) {
-        go('/pages/product-list.html')
-    }
-});
+// Lock state for buttons
+const buttonLock = ref<boolean>(false);
 
 const username = ref('')
 const password = ref('')

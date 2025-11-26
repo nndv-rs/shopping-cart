@@ -7,6 +7,7 @@ import Checkout from './pages/checkout/Checkout.vue';
 import ProductDetails from './pages/product-details/ProductDetails.vue';
 import Registeration from './pages/registeration/Registeration.vue';
 import Login from './pages/login/Login.vue';
+import { useAuthenticationStore } from './stores/AuthenticationStore';
 
 // FIREBASE SDK --------------------------------------------------------
 import { initializeApp } from "firebase/app";
@@ -54,3 +55,21 @@ const pinia = createPinia()
 app.use(router);
 app.use(pinia)
 app.mount('#app');
+
+const authenticationStore = useAuthenticationStore()
+
+// Guard from accessing product pages without logging in
+router.beforeEach((to) => {
+    let isLoggedIn = authenticationStore.getLoginStatus
+    if (!isLoggedIn && to.name !== 'login' && to.name !== 'registeration') {
+        return { name: 'login' }
+    }
+})
+
+// Guard from accessing login and registeration pages while logged in
+router.beforeEach((to) => {
+    let isLoggedIn = authenticationStore.getLoginStatus
+    if (isLoggedIn && (to.name == 'login' || to.name == 'registeration' || to.name == 'home')) {
+        return { name: 'product-list' }
+    }
+})
