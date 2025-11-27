@@ -37,10 +37,12 @@ export const useProductListStore = defineStore('productListStore', {
     },
 
     actions: {
+        // Add a new product into the list
         addProductToList(product: Product) {
             this.productList.push(product)
         },
 
+        // Update the product details
         updateProductDetail(productInput: Product) {
             const index = this.productList.findIndex(product => product.id == productInput.id)
             if (index !== -1) {
@@ -54,6 +56,7 @@ export const useProductListStore = defineStore('productListStore', {
             }
         },
 
+        // Remove a product from the list
         removeProductFromList(id: number) {
             const index = this.productList.findIndex(product => product.id === id)
             if (index !== -1) {
