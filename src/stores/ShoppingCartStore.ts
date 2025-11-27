@@ -32,7 +32,8 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
                         items: [],
                     });
                     this.currentUserDocId = docRef.id;
-                    this.shoppingCart = [];
+                    this.shoppingCart = [];            
+                    return true;
 
                 // Else use the existing document
                 } else {            
@@ -41,11 +42,11 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
                     
                     this.currentUserDocId = userDoc!.id;
                     this.shoppingCart = data!.items || [];
+                    return true;
                 }
 
             } catch (error) {
-                console.error("Error initializing cart from Firebase:", error);
-                this.shoppingCart = []; // Use empty cart if there's an error
+                return null;
             }
         },
 
@@ -64,8 +65,9 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
                 }
                 
                 await this.syncCartToFirebase();
+                return true;
             } catch (error) {
-                console.error("Error adding item to cart:", error);
+                return null;
             }
         },
 
@@ -82,8 +84,9 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
                 }
                 
                 await this.syncCartToFirebase();
+                return true;
             } catch (error) {
-                console.error("Error updating item amount:", error);
+                return null;
             }
         },
 
@@ -96,8 +99,9 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
                 }
                 
                 await this.syncCartToFirebase();
+                return true;
             } catch (error) {
-                console.error("Error removing item from cart:", error);
+                return null;
             }
         },
 
@@ -108,24 +112,30 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
 
         // Clear the shopping cart both locally and on Firebase when clicking Checkout
         async clearCartCheckout() {
-            this.shoppingCart.splice(0, this.shoppingCart.length)
-            await this.syncCartToFirebase();
+            try {
+                this.shoppingCart.splice(0, this.shoppingCart.length)
+                await this.syncCartToFirebase();
+            } catch (error) {
+                return null;
+            }            
         },
 
         // Sync the current shopping cart state to Firebase
         async syncCartToFirebase() {
             try {
                 if (!this.currentUserDocId) {
-                    console.error("User document ID not set. Cannot sync cart.");
-                    return;
+                    throw new Error("User Document ID is not set"); // Cannot sync cart if the user document id is not set
                 }
 
                 const cartDocRef = doc(database, "shoppingCart", this.currentUserDocId);
                 await updateDoc(cartDocRef, {
                     items: this.shoppingCart,
                 });
+                return true;
             } catch (error) {
-                console.error("Error syncing cart to Firebase:", error);
+                // Reset cart to empty and throw error when cannot sync cart to Firebase for any reason
+                this.shoppingCart = [] 
+                throw error; 
             }
         }
     }

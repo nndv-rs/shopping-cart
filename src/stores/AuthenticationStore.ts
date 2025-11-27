@@ -38,7 +38,7 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
                     return 'registerFailedDuplicatedUsername'
                 }
             } catch (error) {
-                console.error("Error registering new user:", error);
+                return null;
             }      
         },
 
@@ -52,7 +52,7 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    return null;
+                    return false;
                 } else {
                     const userToAuthenticate = querySnapshot.docs[0]?.data() as User;
                     if (userToAuthenticate?.username === usernameInput && userToAuthenticate?.password === passwordInput) {
@@ -69,7 +69,7 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
                     }
                 }
             } catch (error) {
-                console.error("Error logging in:", error);
+                return null;
             }
         },
 

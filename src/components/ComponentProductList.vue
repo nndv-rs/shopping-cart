@@ -46,9 +46,19 @@ const descriptionInput = ref<string>('');
 const imageInput = ref<string>('');
 
 // Fetch product list from Firebase when loaded
-onMounted(() => {
-    productListStore.fetchProductListFromFirebase()
-    renderList.value = productList
+onMounted(async() => {
+    let getProductListStatus = await productListStore.fetchProductListFromFirebase()
+    if (getProductListStatus) {
+        renderList.value = productList
+    }
+    else {
+        renderList.value = [] // If fail to get product list, set list to empty
+        showModal({
+            title: 'Error',
+            message: 'Failed to load in product list. Please try again.',
+            showConfirm: false,
+        })
+    }
 });
 
 // Add a product to the product list store
@@ -106,16 +116,25 @@ async function addSingleItemToCart(productId: number) {
         let index = productList.findIndex(product => product.id === productId)
         if (index !== -1) {
             let productToAdd = productList[index];
-            await shoppingCartStore.addItemToCart(productToAdd!, 1)
-            showModal({
-                title: 'Item added',
-                message: 'Your item has been added to the cart.',
-                showConfirm: false,
-            })
+
+            let status = await shoppingCartStore.addItemToCart(productToAdd!, 1)     
+            if (status) {
+                showModal({
+                    title: 'Item added',
+                    message: 'Your item has been added to the cart.',
+                    showConfirm: false,
+                })
+            } else {
+                showModal({
+                    title: 'Error',
+                    message: 'Fail to add item to cart. Please try again.',
+                    showConfirm: false,
+                })
+            }
         } else {
             showModal({
                 title: 'Error',
-                message: 'An error has occured, please try again.',
+                message: 'Product does not or no longer exist.',
                 showConfirm: false,
             })
         }

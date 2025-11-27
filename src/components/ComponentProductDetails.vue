@@ -84,12 +84,20 @@ async function addItemToCart(productToAdd: Product) {
     buttonLock.value = true // Lock the button upon click
 
     try {
-        await shoppingCartStore.addItemToCart(productToAdd, amountInput.value)
-        showModal({
-            title: 'Item added',
-            message: 'Your item has been added to the cart.',
-            showConfirm: false,
-        })
+        let status = await shoppingCartStore.addItemToCart(productToAdd, amountInput.value)
+        if (status) {
+            showModal({
+                title: 'Item added',
+                message: 'Your item has been added to the cart.',
+                showConfirm: false,
+            })
+        } else {
+            showModal({
+                title: 'Error',
+                message: 'Fail to add item to cart. Please try again.',
+                showConfirm: false,
+            })
+        }     
     } finally {
         buttonLock.value = false // Release button lock when operation ends
     }
@@ -123,10 +131,20 @@ async function updateProductDetails() {
                         price: Number(priceInput.value),
                         description: descriptionInput.value,
                         image: imageInput.value
-                    } 
-                    await productListStore.updateProductDetails(productInput)
+                    }
+
+                    let status = await productListStore.updateProductDetails(productInput)  
+                    if (status !== true) {
+                        showModal({
+                            title: 'Error',
+                            message: 'Could not update product details. Please try again.',
+                            showConfirm: false,
+                        })
+                        fetchProductDetails() // Re-fetch product details in case of update failure
+                    }
+                    
                     // Close editor after update
-                    showEditor.value = false                   
+                    showEditor.value = false  
                 }
             }) 
         } finally {
@@ -149,8 +167,17 @@ async function deleteProduct() {
             showConfirm: true,
             onConfirm: async () => {
                 let productId = Number(product.value?.id);
-                await productListStore.removeProductFromList(productId);
-                go(`/pages/product-list.html`); // Redirect back to Product List page
+
+                let status = await productListStore.removeProductFromList(productId);
+                if (status) {
+                    go(`/pages/product-list.html`); // Redirect back to Product List page
+                } else {
+                    showModal({
+                        title: 'Error',
+                        message: 'Could not delete the product from database. Please try again.',
+                        showConfirm: false,
+                    })
+                }
             }
         })
     } finally {

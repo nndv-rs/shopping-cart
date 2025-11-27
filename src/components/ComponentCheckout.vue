@@ -46,7 +46,7 @@ watch(
 );
 
 // Updating the amount of items inside the cart
-function updateAmount(item: ShoppingCartItem) {
+async function updateAmount(item: ShoppingCartItem) {
     showModal({
         title: 'Confirm Update',
         message: 'Are you sure you want to update this item in your cart?',
@@ -61,12 +61,12 @@ function updateAmount(item: ShoppingCartItem) {
             } else {
                 await shoppingCartStore.updateItemAmountInCart(item, amountInput)
             }
-        }
+        }   
     })
 }
 
 // Removing an item inside the cart
-function removeItem(item: ShoppingCartItem) {
+async function removeItem(item: ShoppingCartItem) {
     showModal({
         title: 'Confirm Deletion',
         message: 'Are you sure you want to remove this item from your cart?',
@@ -85,7 +85,7 @@ async function completeCheckout() {
         showConfirm: false,
     })
     shoppingCart!.splice(0, shoppingCart!.length)
-    shoppingCartStore.clearCartCheckout()
+    await shoppingCartStore.clearCartCheckout()
 }
 </script>
 

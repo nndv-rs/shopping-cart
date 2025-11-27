@@ -21,10 +21,10 @@ export const useProductListStore = defineStore('productListStore', {
         async addProductToList(product: Product) {
             try {
                 await addDoc(collection(database, "productList"), product);
-                this.fetchProductListFromFirebase();
+                await this.fetchProductListFromFirebase();
                 return true;
             } catch (error) {
-                console.error("Error adding product to list:", error);
+                return null;
             }   
         },
 
@@ -51,10 +51,11 @@ export const useProductListStore = defineStore('productListStore', {
                     await updateDoc(docToUpdate!.ref, dataInput);
 
                     // Fetch new item database after update operation
-                    this.fetchProductListFromFirebase();
+                    await this.fetchProductListFromFirebase();
+                    return true;
                 }
             } catch (error) {
-                console.error("Error updating product details:", error);
+                return null;
             }          
         },
 
@@ -72,9 +73,10 @@ export const useProductListStore = defineStore('productListStore', {
                 } else {
                     const docToDelete = querySnapshot.docs[0]
                     await deleteDoc(docToDelete!.ref)
+                    return true;
                 }
             } catch (error) {
-                console.error("Error removing product from list:", error);
+                return null;
             }    
         },
 
@@ -99,8 +101,10 @@ export const useProductListStore = defineStore('productListStore', {
                     }
                     this.productList.push(product)
                 });
+                return true;
             } catch (error) {
-                console.error("Error fetching product from Firebase:", error);
+                this.productList = [] // If fail to fetch product list, set the list to empty
+                return null;
             }
         }
     }

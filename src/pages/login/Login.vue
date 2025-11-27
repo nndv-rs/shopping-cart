@@ -38,15 +38,27 @@ async function login() {
             })
         } else {
             // Check for correct credentials
-            const loginSuccess = authenticationStore.loginUser(username.value, password.value)
-            if (await loginSuccess) {
-                go('/pages/product-list.html')
-            } else {
-                showModal({
-                    title: 'Invalid Credentials',
-                    message: 'Username And/Or Password is incorrect, please try again.',
-                    showConfirm: false,
-                })
+            const loginSuccess =  await authenticationStore.loginUser(username.value, password.value)
+            console.log(loginSuccess)
+
+            switch (loginSuccess) {
+                case true: // Login success
+                    go('/pages/product-list.html')
+                    break;
+                case false: // Wrong credentials
+                    showModal({
+                        title: 'Invalid Credentials',
+                        message: 'Username And/Or Password is incorrect, please try again.',
+                        showConfirm: false,    
+                    })
+                    break;
+                default:
+                    showModal({ // Fallback error
+                        title: 'Unknown Error',
+                        message: 'An unknown error has occcured. Please try again.',
+                        showConfirm: false,
+                    })
+                    break;
             }
         }
     } finally {
