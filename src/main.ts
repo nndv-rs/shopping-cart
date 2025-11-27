@@ -36,11 +36,15 @@ export { firebaseApp, database }
 
 const routes = [
 	{ path: '/', name: 'home', component: Login },
-	{ path: '/pages/product-list.html', name: 'product-list', component: ProductList },
-	{ path: '/pages/checkout.html', name: 'checkout', component: Checkout },
-	{ path: '/pages/product-details.html', name: 'product-details', component: ProductDetails },
-    { path: '/pages/registeration.html', name: 'registeration', component: Registeration },
-    { path: '/pages/login.html', name: 'login', component: Login },
+	{ path: '/pages/product-list', name: 'product-list', component: ProductList },
+	{ path: '/pages/checkout', name: 'checkout', component: Checkout },
+	{ path: '/pages/product-details', name: 'product-details', component: ProductDetails },
+    { path: '/pages/registeration', name: 'registeration', component: Registeration },
+    { path: '/pages/login', name: 'login', component: Login },
+    {
+        path: '/:pathMatch(.*)*', // Redirect back to home page anything that doesn't match above
+        redirect: '/',           
+    },
 ];
 
 const router = createRouter({

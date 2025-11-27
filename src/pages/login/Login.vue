@@ -43,7 +43,7 @@ async function login() {
 
             switch (loginSuccess) {
                 case true: // Login success
-                    go('/pages/product-list.html')
+                    go('/pages/product-list')
                     break;
                 case false: // Wrong credentials
                     showModal({
@@ -99,7 +99,7 @@ async function login() {
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" :disabled="buttonLock">Login</button>
-                <button class="btn btn-primary" :disabled="buttonLock" @click="go('/pages/registeration.html')">New User ?</button>
+                <button class="btn btn-primary" :disabled="buttonLock" @click="go('/pages/registeration')">New User ?</button>
             </form>
         </section>
         </main>

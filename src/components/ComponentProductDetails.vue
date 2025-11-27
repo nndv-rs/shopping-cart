@@ -170,7 +170,7 @@ async function deleteProduct() {
 
                 let status = await productListStore.removeProductFromList(productId);
                 if (status) {
-                    go(`/pages/product-list.html`); // Redirect back to Product List page
+                    go(`/pages/product-list`); // Redirect back to Product List page
                 } else {
                     showModal({
                         title: 'Error',

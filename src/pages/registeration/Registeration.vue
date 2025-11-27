@@ -63,7 +63,7 @@ async function register() {
                 })
                 const loginSuccess = authenticationStore.loginUser(username.value, password.value);
                 if (await loginSuccess) {
-                    go('/pages/product-list.html');
+                    go('/pages/product-list');
                 } else {
                     // If automatic login failed, redirect user to login page
                     showModal({ 
@@ -71,7 +71,7 @@ async function register() {
                         message: 'We could not automatically log you in. Please login into your new account manually.',
                         showConfirm: false,
                     })
-                    go('/pages/login.html')                 
+                    go('/pages/login')                 
                 }
                 break;
             case 'registerFailedDuplicatedUsername': // Username already existed in the database
@@ -132,7 +132,7 @@ async function register() {
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" :disabled="buttonLock">Register</button>
-                <button class="btn btn-primary" :disabled="buttonLock" @click="go('/pages/login.html')">Already have an account ?</button>
+                <button class="btn btn-primary" :disabled="buttonLock" @click="go('/pages/login')">Already have an account ?</button>
             </form>
         </section>
         </main>
