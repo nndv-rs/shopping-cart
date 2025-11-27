@@ -31,7 +31,7 @@ function login() {
         // Check for correct credentials
         const loginSuccess = authenticationStore.loginUser(username.value, password.value)
         if (loginSuccess) {
-            go('/pages/product-list.html')
+            go('/pages/product-list')
         } else {
             showModal({
                 title: 'Invalid Credentials',
@@ -75,7 +75,7 @@ function login() {
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Login</button>
-                <button class="btn btn-primary"  @click="go('/pages/registeration.html')">New User ?</button>
+                <button class="btn btn-primary"  @click="go('/pages/registeration')">New User ?</button>
             </form>
         </section>
         </main>

@@ -61,8 +61,8 @@ function logout() {
                 <p class="current-username" v-if="loggedInStatus">Welcome back, {{ loggedInUsername }}</p>
             </div>
             <nav class="header-nav">
-                <button class="nav-btn" @click="go('/pages/product-list.html')">Products</button>
-                <button class="nav-btn" @click="go('/pages/checkout.html')">Checkout</button>
+                <button class="nav-btn" @click="go('/pages/product-list')">Products</button>
+                <button class="nav-btn" @click="go('/pages/checkout')">Checkout</button>
                 <button class="nav-btn-logout" @click="logout">Logout</button>
             </nav>
         </header>

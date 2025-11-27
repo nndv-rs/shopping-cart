@@ -105,7 +105,7 @@ function register() {
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Register</button>
-                <button class="btn btn-primary"  @click="go('/pages/login.html')">Already have an account ?</button>
+                <button class="btn btn-primary"  @click="go('/pages/login')">Already have an account ?</button>
             </form>
         </section>
         </main>

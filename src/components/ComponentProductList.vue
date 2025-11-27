@@ -125,7 +125,7 @@ function addSingleItemToCart(productId: number) {
     
 // Handle routing to the correct product detail page
 function viewProductDetails(productId: number) {
-    go(`/pages/product-details.html?id=${productId}`);
+    go(`/pages/product-details?id=${productId}`);
 }
 
 // Handle for search box text updates

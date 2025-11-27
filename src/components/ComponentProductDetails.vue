@@ -124,7 +124,7 @@ function deleteProduct() {
         onConfirm: () => {
             let productId = Number(product.value?.id);
             productListStore.removeProductFromList(productId);
-            go(`/pages/product-list.html`); // Redirect back to Product List page
+            go(`/pages/product-list`); // Redirect back to Product List page
         }
     })
 }
