@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import '@/assets/css/AuthenticationPages.css'
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useModal } from '@/composables/useModal'
 import { useAuthenticationStore } from '@/stores/AuthenticationStore';
+import { isAlphanumeric } from '@/utils/validators';
 
 // Router
 const router = useRouter();
@@ -13,59 +14,70 @@ const go = (path: string) => router.push(path);
 const authenticationStore = useAuthenticationStore()
 
 // Modal
-const { showModal } = useModal();
+const { showError, showSuccess } = useModal();
 
+// Input fields
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 
+// Registeration status messages
+enum RegisterStatusMessages {
+    Success = "New user registered, logging in to your new account ...",
+    InputLength = "Username and password must be at least 5 characters long.",
+    SpecialCharacters = "Username cannot contain special characters (including space).",
+    DuplicateUsername = "This username already existed. Please choose another username.",
+    ConfirmPassword = "Password confirmation does not match. Please check again.",
+    Unknown = "An unknown error has occcured. Please try again.",
+}
+
 // Function for registering a new user
 function register() {
-    // Check for username and password minimum length
+    // Form validations: username/password length, username special characters and matching confirm passwords
     if (username.value.length < 5 || password.value.length < 5) {
-        showModal({
-            title: 'Invalid Input',
-            message: 'Username and password must be at least 5 characters long.',
-            showConfirm: false,
-        })
-    } else {
-        // Check if Password and Confirm Password are the same
-        if (password.value !== confirmPassword.value) {
-            showModal({
-                title: 'Password confirmation does not match',
-                message: 'Please check your password again.',
-                showConfirm: false,
-            })
-        } else {
-            const registerStatus = authenticationStore.registerNewUser(username.value, password.value)
-            switch(registerStatus) {
-                case 'registerSuccess': // Registeration is successful, immediately login into the new account and go to home page
-                    showModal({
-                        title: 'User registered',
-                        message: 'New user registered. Logging into your new account ...',
-                        showConfirm: false,
-                    })
-                    authenticationStore.loginUser(username.value, password.value)
-                    go('/')
-                    break;
-                case 'registerFailedDuplicatedUsername': // Username already existed in the database
-                    showModal({
-                        title: 'Duplicated Username',
-                        message: 'This username already existed. Please choose another username.',
-                        showConfirm: false,
-                    })
-                    break;
-                default:
-                    showModal({ // Fallback error
-                        title: 'Unknown Error',
-                        message: 'An unknown error has occcured. Please try again.',
-                        showConfirm: false,
-                    })
-                    break;
-            }
-        }     
+        showError(RegisterStatusMessages.InputLength);
+        return;
     }
-}
+    if (isAlphanumeric(username.value) == false) {
+        showError(RegisterStatusMessages.SpecialCharacters)
+        return;
+    }
+    if (password.value !== confirmPassword.value) {
+        showError(RegisterStatusMessages.ConfirmPassword)
+        return;
+    } 
+
+    // Store validations:
+    const registerStatus = authenticationStore.registerNewUser(username.value, password.value)
+    switch(registerStatus) {
+        // Registeration is successful, attempt to login into the new account and go to home page
+        case 'registerSuccess':
+            showSuccess(RegisterStatusMessages.Success)
+            authenticationStore.loginUser(username.value, password.value)
+            go('/')
+            break;
+
+        // Username and/or password length
+        case 'registerFailedInputLength':
+            showError(RegisterStatusMessages.InputLength)
+            break;
+
+        // Username contains special characters
+        case 'registerFailedSpecialCharacters':
+            showError(RegisterStatusMessages.SpecialCharacters)
+            break;
+
+        // Username already existed in the database
+        case 'registerFailedDuplicatedUsername':
+            showError(RegisterStatusMessages.DuplicateUsername)
+            break;
+
+        // Fallback error
+        default:
+            showError(RegisterStatusMessages.Unknown)
+            break;
+    }
+}     
 </script>
 
 <template>
@@ -87,19 +99,19 @@ function register() {
             </div>
             <form class="form" @submit.prevent="register">
                 <div class="form-group">
-                    <label for="username">Username</label>
+                    <label for="username">Username*</label>
                     <div class="input-wrapper">
                         <input v-model="username" id="username" type="text" placeholder="Choose a username" required />
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password">Password*</label>
                     <div class="input-wrapper">
                         <input v-model="password" id="password" type="password" placeholder="Create a password" required />
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="password">Confirm Password</label>
+                    <label for="password">Confirm Password*</label>
                     <div class="input-wrapper">
                         <input v-model="confirmPassword" id="password-confirm" type="password" placeholder="Retype your password" required />
                     </div>

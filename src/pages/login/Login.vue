@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import '@/assets/css/AuthenticationPages.css'
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useModal } from '@/composables/useModal'
 import { useAuthenticationStore } from '@/stores/AuthenticationStore';
@@ -13,7 +13,7 @@ const go = (path: string) => router.push(path);
 const authenticationStore = useAuthenticationStore()
 
 // Modal
-const { showModal } = useModal();
+const { showError } = useModal();
 
 const username = ref('')
 const password = ref('')
@@ -22,26 +22,18 @@ const password = ref('')
 function login() {
     // Check for blank input
     if (username.value == "" || password.value == "") {
-        showModal({
-            title: 'Invalid Input',
-            message: 'Username And/Or Password cannot be left blank',
-            showConfirm: false,
-        })
+        showError("Username and/or Password cannot be left blank")
+        return;
+    }
+
+    // Check for correct credentials
+    const loginSuccess = authenticationStore.loginUser(username.value, password.value)
+    if (loginSuccess) {
+        go('/pages/product-list')
     } else {
-        // Check for correct credentials
-        const loginSuccess = authenticationStore.loginUser(username.value, password.value)
-        if (loginSuccess) {
-            go('/pages/product-list')
-        } else {
-            showModal({
-                title: 'Invalid Credentials',
-                message: 'Username And/Or Password is incorrect, please try again.',
-                showConfirm: false,
-            })
-        }
+        showError("Username and/or Password is incorrect, please try again.")
     }
 }
-
 </script>
 
 <template>

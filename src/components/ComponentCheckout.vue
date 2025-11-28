@@ -77,14 +77,14 @@ function removeItem(item: ShoppingCartItem) {
     })
 }
 
-    function completeCheckout() {
-        showModal({
-            title: 'Thank you',
-            message: 'Thank you for your purchase! Your order has been placed.',
-            showConfirm: false,
-        })
-        shoppingCart!.splice(0, shoppingCart!.length)
-    }
+function completeCheckout() {
+    showModal({
+        title: 'Thank you',
+        message: 'Thank you for your purchase! Your order has been placed.',
+        showConfirm: false,
+    })
+    shoppingCart!.splice(0, shoppingCart!.length)
+}
 </script>
 
 <template>

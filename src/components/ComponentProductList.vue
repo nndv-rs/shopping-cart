@@ -24,7 +24,7 @@ const { getShoppingCart, addItemToCart } = shoppingCartStore
 const shoppingCart = getShoppingCart
 
 // Modal
-const { showModal } = useModal()
+const { showModal, showError } = useModal()
 
 // Sort and search parameters
 const sortKey = ref<keyof Product | null>(null);      
@@ -80,11 +80,7 @@ const renderList = computed(() => {
 // Add a product to the product list store
 function addProductToStore() {
     if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "" || imageInput.value == "")) {
-        showModal({
-            title: 'Invalid Input',
-            message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
-            showConfirm: false,
-        })
+        showError('Make sure all fields are filled before submitting. Price cannot be zero.')
     } else {
         let newProduct: Product = {
             id: Math.floor(Math.random() * 100000),
@@ -115,11 +111,7 @@ function addSingleItemToCart(productId: number) {
             showConfirm: false,
         })
     } else {
-        showModal({
-            title: 'Error',
-            message: 'An error has occured, please try again.',
-            showConfirm: false,
-        })
+        showError('An error has occured, please try again.')
     }
 }
     

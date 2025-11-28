@@ -25,7 +25,7 @@ const product = ref<Product | null>(null);
 const imageFileName = ref<string | undefined>('');
 
 // Modal
-const { showModal } = useModal();
+const { showModal, showInfo, showError } = useModal();
 
 // Local editor modal state
 const showEditor = ref(false)
@@ -77,22 +77,14 @@ function readIdFromUrl(): number | null {
 // Function for adding item to cart
 function addItemToCart(productToAdd: Product) {
     shoppingCartStore.addItemToCart(productToAdd, amountInput.value)
-    showModal({
-        title: 'Item added',
-        message: 'Your item has been added to the cart.',
-        showConfirm: false,
-    })
+    showInfo("Your item has been added to the cart.")
 }
 
 // Function for updating a product details
 function updateProductDetails() {
     let productId = Number(product.value?.id);
     if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "")) {
-        showModal({
-            title: 'Invalid Input',
-            message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
-            showConfirm: false,
-        })
+        showError('Make sure all fields are filled before submitting. Price cannot be zero.')
     } else {
         showModal({
             title: 'Confirm Update',
@@ -112,8 +104,7 @@ function updateProductDetails() {
             }
         })         
     }
- }
-
+}
 
 // Function for deletring a product from the list
 function deleteProduct() {
