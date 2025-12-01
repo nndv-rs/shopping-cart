@@ -26,7 +26,7 @@ const { getShoppingCart, addItemToCart } = shoppingCartStore
 const shoppingCart = getShoppingCart
 
 // Modal
-const { showModal } = useModal()
+const { showModal, showError } = useModal()
 
 // Lock state for buttons
 const buttonLock = ref<boolean>(false);
@@ -53,11 +53,7 @@ onMounted(async() => {
     }
     else {
         renderList.value = [] // If fail to get product list, set list to empty
-        showModal({
-            title: 'Error',
-            message: 'Failed to load in product list. Please try again.',
-            showConfirm: false,
-        })
+        showError('Failed to load in product list. Please try again.')
     }
 });
 
@@ -68,40 +64,32 @@ async function addProductToStore() {
     } 
     buttonLock.value = true // Lock the button upon click
 
-    if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "" || imageInput.value == "")) {
-        showModal({
-            title: 'Invalid Input',
-            message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
-            showConfirm: false,
-        })
-        buttonLock.value = false
-    } else {
-        try {
-            let newProduct: Product = {
-                id: Math.floor(Math.random() * 100000),
-                name: nameInput.value,
-                price: Number(priceInput.value),
-                description: descriptionInput.value,
-                image: imageInput.value
-            }
-
-            let status = productListStore.addProductToList(newProduct)
-            if (await status) {
-                // Reset input fields after adding a new product
-                priceInput.value = 1
-                nameInput.value = ""
-                descriptionInput.value = ""
-                imageInput.value = ""
-            } else {
-                showModal({
-                    title: 'Error',
-                    message: 'Failed to add new product. Please try again.',
-                    showConfirm: false,
-                }) 
-            }
-        } finally {
-            buttonLock.value = false; // Release button lock when operation ends
+    try {
+        if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "" || imageInput.value == "")) {
+            showError('Make sure all fields are filled before submitting. Price cannot be zero.')
+            return;
         }
+
+        let newProduct: Product = {
+            id: Math.floor(Math.random() * 100000),
+            name: nameInput.value,
+            price: Number(priceInput.value),
+            description: descriptionInput.value,
+            image: imageInput.value
+        }
+
+        let status = await productListStore.addProductToList(newProduct)
+        if (status) {
+            // Reset input fields after adding a new product
+            priceInput.value = 1
+            nameInput.value = ""
+            descriptionInput.value = ""
+            imageInput.value = ""
+        } else {
+            showError('Failed to add new product. Please try again.')
+        }
+    } finally {
+        buttonLock.value = false; // Release button lock when operation ends
     }
 }
 
@@ -125,18 +113,10 @@ async function addSingleItemToCart(productId: number) {
                     showConfirm: false,
                 })
             } else {
-                showModal({
-                    title: 'Error',
-                    message: 'Fail to add item to cart. Please try again.',
-                    showConfirm: false,
-                })
+                showError('Fail to add item to cart. Please try again.')
             }
         } else {
-            showModal({
-                title: 'Error',
-                message: 'Product does not or no longer exist.',
-                showConfirm: false,
-            })
+            showError('Product does not or no longer exist.')
         }
     } finally {
         buttonLock.value = false; // Release button lock when operation ends
@@ -163,7 +143,8 @@ async function handleSortUpdate(message: string) {
     try {
         renderList.value = await querySortColumn(sortKey.value, sortDirection.value)
     } catch (error) {
-        console.error("Error fetching sorted data from Firebase:", error);
+        showError("Error submitting sort request, please try again.")
+        return null;
     }
 }
 
@@ -176,7 +157,8 @@ async function handleSearchSubmit(searchText: string) {
         try {
             renderList.value = await querySearch(searchText)
         } catch (error) {
-            console.error("Error submitting search request to Firebase:", error);
+            showError("Error submitting search request, please try again.")
+            return null;
         }
     }  
 }
@@ -202,7 +184,7 @@ async function querySortColumn(sortKey: string, sortDirection: "asc" | "desc") {
     return productsToRender;
 }
 
-// Query Firebase for EXACT matching item Name or Description
+// Query Firebase for EXACT matching item Name OR Description
 // Firebase Firestore currently do not natively support partial matches and requires a workaround (Ex: Algolia)
 async function querySearch(searchText: string) {
     const q = query(

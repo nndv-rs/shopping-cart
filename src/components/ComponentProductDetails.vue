@@ -27,7 +27,7 @@ const buttonLock = ref<boolean>(false);
 const product = ref<Product | null>(null);
 
 // Modal
-const { showModal } = useModal();
+const { showModal, showError } = useModal();
 
 // Local editor modal state
 const showEditor = ref(false)
@@ -92,11 +92,7 @@ async function addItemToCart(productToAdd: Product) {
                 showConfirm: false,
             })
         } else {
-            showModal({
-                title: 'Error',
-                message: 'Fail to add item to cart. Please try again.',
-                showConfirm: false,
-            })
+            showError('Fail to add item to cart. Please try again.')
         }     
     } finally {
         buttonLock.value = false // Release button lock when operation ends
@@ -110,50 +106,43 @@ async function updateProductDetails() {
     } 
     buttonLock.value = true // Lock the button upon click
 
-    let productId = Number(product.value?.id);
-    if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "")) {
+    try {
+        let productId = Number(product.value?.id);
+        if ((Number(priceInput.value) <= 0 || nameInput.value == "" || descriptionInput.value == "" || imageInput.value == "")) {
+            showError('Make sure all fields are filled before submitting. Price cannot be zero.')
+            return;
+        }
+
         showModal({
-            title: 'Invalid Input',
-            message: 'Make sure all fields are filled before submitting. Price cannot be zero.',
-            showConfirm: false,
-        })
-        buttonLock.value = false
-    } else {
-        try {
-            showModal({
-                title: 'Confirm Update',
-                message: 'Are you sure you want to update this item details and save it to the database ?',
-                showConfirm: true,
-                onConfirm: async () => {
-                    let productInput : Product = {
-                        id : productId,
-                        name: nameInput.value,
-                        price: Number(priceInput.value),
-                        description: descriptionInput.value,
-                        image: imageInput.value
-                    }
-
-                    let status = await productListStore.updateProductDetails(productInput)  
-                    if (status !== true) {
-                        showModal({
-                            title: 'Error',
-                            message: 'Could not update product details. Please try again.',
-                            showConfirm: false,
-                        })
-                        fetchProductDetails() // Re-fetch product details in case of update failure
-                    }
-                    
-                    // Close editor after update
-                    showEditor.value = false  
+            title: 'Confirm Update',
+            message: 'Are you sure you want to update this item details and save it to the database ?',
+            showConfirm: true,
+            onConfirm: async () => {
+                let productInput : Product = {
+                    id : productId,
+                    name: nameInput.value,
+                    price: Number(priceInput.value),
+                    description: descriptionInput.value,
+                    image: imageInput.value
                 }
-            }) 
-        } finally {
-            buttonLock.value = false // Release button lock when operation ends
-        }     
-    }
- }
 
-// Function for deletring a product from the list
+                let status = await productListStore.updateProductDetails(productInput)  
+                if (status !== true) {
+                    showError('Could not update product details. Please try again.')
+                    fetchProductDetails() // Re-fetch product details in case of update failure
+                }
+                
+                // Close editor after update
+                showEditor.value = false  
+            }
+        }) 
+    } finally {
+        buttonLock.value = false // Release button lock when operation ends
+    }     
+    
+}
+
+// Function for deleting a product from the list
 async function deleteProduct() {
     if (buttonLock.value == true) { // Ignore multiple clicks
         return;
@@ -172,11 +161,7 @@ async function deleteProduct() {
                 if (status) {
                     go(`/pages/product-list`); // Redirect back to Product List page
                 } else {
-                    showModal({
-                        title: 'Error',
-                        message: 'Could not delete the product from database. Please try again.',
-                        showConfirm: false,
-                    })
+                    showError('Could not delete the product from database. Please try again.')
                 }
             }
         })

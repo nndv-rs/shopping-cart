@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import type { User } from '@/types/User'
 import { useShoppingCartStore } from '@/stores/ShoppingCartStore';
+import { isAlphanumeric } from '@/utils/validators';
 import { database } from '@/main';
 import { collection, query, where, addDoc, getDocs } from "firebase/firestore";
 
@@ -19,6 +20,16 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
     actions: {
         // Register a new user, save new user data to Firebase
         async registerNewUser(usernameInput: string, passwordInput: string) {
+            // Verify username and password length
+            if (usernameInput.length < 5 || passwordInput.length < 5) {
+                return 'registerFailedInputLength';
+            }
+
+            // Verify username for special characters
+            if (isAlphanumeric(usernameInput) == false) {
+                return 'registerFailedSpecialCharacters';
+            }
+
             try {
                 const q = query(
                     collection(database, "users"),
@@ -44,6 +55,10 @@ export const useAuthenticationStore = defineStore('authenticationStore', {
 
         // Authenticate a user credentials for login
         async loginUser(usernameInput: string, passwordInput: string) {
+            if (!usernameInput || !passwordInput) { // Check for blank inputs
+                return null;
+            }
+
             try {
                 const q = query(
                     collection(database, "users"),

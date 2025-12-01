@@ -13,7 +13,7 @@ const go = (path: string) => router.push(path);
 const authenticationStore = useAuthenticationStore()
 
 // Modal
-const { showModal } = useModal();
+const { showError } = useModal();
 
 // Lock state for buttons
 const buttonLock = ref<boolean>(false);
@@ -31,40 +31,27 @@ async function login() {
     try {
         // Check for blank input
         if (username.value == "" || password.value == "") {
-            showModal({
-                title: 'Invalid Input',
-                message: 'Username And/Or Password cannot be left blank',
-                showConfirm: false,
-            })
-        } else {
-            // Check for correct credentials
-            const loginSuccess =  await authenticationStore.loginUser(username.value, password.value)
-
-            switch (loginSuccess) {
-                case true: // Login success
-                    go('/pages/product-list')
-                    break;
-                case false: // Wrong credentials
-                    showModal({
-                        title: 'Invalid Credentials',
-                        message: 'Username And/Or Password is incorrect, please try again.',
-                        showConfirm: false,    
-                    })
-                    break;
-                default:
-                    showModal({ // Fallback error
-                        title: 'Unknown Error',
-                        message: 'An unknown error has occcured. Please try again.',
-                        showConfirm: false,
-                    })
-                    break;
-            }
+            showError('Username And/Or Password cannot be left blank')
+            return;
+        }
+        
+        // Check for correct credentials
+        const loginSuccess =  await authenticationStore.loginUser(username.value, password.value)
+        switch (loginSuccess) {
+            case true: // Login success
+                go('/pages/product-list')
+                break;
+            case false: // Wrong credentials
+                showError("Username And/Or Password is incorrect, please try again.")
+                break;
+            default: // Fallback error
+                showError('An unknown error has occcured. Please try again.')
+                break;
         }
     } finally {
         buttonLock.value = false // Release button lock when operation ends
     }
 }
-
 </script>
 
 <template>
