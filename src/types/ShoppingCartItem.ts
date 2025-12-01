@@ -1,6 +1,4 @@
-import type { Product } from '@/types/Product';
-
 export type ShoppingCartItem = {
-    product: Product;
+    productId: number;
     amount: number;
 }

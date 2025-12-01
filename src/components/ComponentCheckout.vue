@@ -4,11 +4,15 @@ import { reactive, onMounted, watch, computed } from 'vue';
 import { useModal } from '@/composables/useModal'
 import type { ShoppingCartItem } from '@/types/ShoppingCartItem';
 import { useShoppingCartStore } from '@/stores/ShoppingCartStore';
+import { useProductListStore } from '@/stores/ProductListStore';
 
 // Global data
 const shoppingCartStore = useShoppingCartStore()
 const { getShoppingCart, removeItemFromCart } = shoppingCartStore
 const shoppingCart = getShoppingCart
+
+const productListStore = useProductListStore()
+const { getProductById } = productListStore
 
 // Keep a local input value so edits don't immediately mutate the shopping cart
 const quantityInputs = reactive<Record<number, string>>({});
@@ -16,11 +20,19 @@ const quantityInputs = reactive<Record<number, string>>({});
 // Use modal for confirmation upon item Update/Delete
 const { showModal } = useModal()
 
+// Helper to get a product by productId (returns undefined when the product is missing)
+function getProductDetails(item: ShoppingCartItem) {
+    return getProductById(item.productId)
+}
+
 // Total price calculation
 const computedTotalPrice = computed(() => {
     let totalPrice = 0;
     shoppingCart!.forEach(item => {
-        totalPrice = totalPrice + (item.amount * item.product.price);
+        const product = getProductDetails(item)
+        if (product) {
+            totalPrice = totalPrice + (item.amount * product.price);
+        }
     });
     return totalPrice;
 });
@@ -28,7 +40,7 @@ const computedTotalPrice = computed(() => {
 // Get item quanitity inside cart upon mounting
 onMounted(() => {
     shoppingCart!.forEach(item => {
-        quantityInputs[item.product.id] = String(item.amount);
+        quantityInputs[item.productId] = String(item.amount);
     });
 });
 
@@ -37,8 +49,8 @@ watch(
     shoppingCart!,
     (newVal) => {
         newVal.forEach(item => {
-            if (!(item.product.id in quantityInputs)) {
-                quantityInputs[item.product.id] = String(item.amount);
+            if (!(item.productId in quantityInputs)) {
+                quantityInputs[item.productId] = String(item.amount);
             }
         });
     },
@@ -52,11 +64,11 @@ async function updateAmount(item: ShoppingCartItem) {
         message: 'Are you sure you want to update this item in your cart?',
         showConfirm: true,
         onConfirm: async () => {
-            const rawInput = quantityInputs[item.product.id];
+            const rawInput = quantityInputs[item.productId];
             const amountInput = parseInt(String(rawInput), 10);
             if (amountInput < 1 || Number.isNaN(amountInput)) {
                 // Enforce minimum 1
-                quantityInputs[item.product.id] = '1';
+                quantityInputs[item.productId] = '1';
                 await shoppingCartStore.updateItemAmountInCart(item, 1)
             } else {
                 await shoppingCartStore.updateItemAmountInCart(item, amountInput)
@@ -104,16 +116,16 @@ async function completeCheckout() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="item in shoppingCart" :key="item.product.id">
-                        <td class="name-col">{{ item.product.name }}</td>
-                        <td class="price-col">$ {{ item.product.price }}</td>
-                        <td class="desc-col">{{ item.product.description }}</td>
+                    <tr v-for="item in shoppingCart" :key="item.productId">
+                        <td class="name-col">{{ getProductDetails(item)?.name ?? 'Product not found' }}</td>
+                        <td class="price-col">$ {{ getProductDetails(item)?.price ?? 'N/A' }}</td>
+                        <td class="desc-col">{{ getProductDetails(item)?.description ?? 'N/A' }}</td>
                         <td class="qty-col">{{ item.amount }}</td>
                         <td class="actions-col">
                             <input
                                 type="number"
                                 min="1"
-                                v-model="quantityInputs[item.product.id]"
+                                v-model="quantityInputs[item.productId]"
                                 class="qty-input"
                             />
                             <button class="btn update" @click="updateAmount(item)">Update</button>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import '@/assets/css/AuthenticationPages.css'
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useModal } from '@/composables/useModal'
 import { useAuthenticationStore } from '@/stores/AuthenticationStore';
@@ -39,7 +39,6 @@ async function login() {
         } else {
             // Check for correct credentials
             const loginSuccess =  await authenticationStore.loginUser(username.value, password.value)
-            console.log(loginSuccess)
 
             switch (loginSuccess) {
                 case true: // Login success

@@ -53,10 +53,10 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
         // Add an item to the cart and sync with Firebase
         async addItemToCart(productInput: Product, amountInput: number) {
             try {
-                const index = this.shoppingCart.findIndex(item => item.product.id === productInput.id)
+                const index = this.shoppingCart.findIndex(item => item.productId === productInput.id)
                 if (index == -1) {
                     let itemToAdd : ShoppingCartItem = {
-                        product: productInput,
+                        productId: productInput.id,
                         amount: amountInput  
                     }
                     this.shoppingCart.push(itemToAdd)
@@ -74,7 +74,7 @@ export const useShoppingCartStore = defineStore('shoppingCartStore', {
         // Update the quantity of a specific item in cart and sync with Firebase
         async updateItemAmountInCart(itemInput: ShoppingCartItem, amountInput: number) {
             try {
-                const index = this.shoppingCart.indexOf(itemInput);
+                const index = this.shoppingCart.findIndex(item => item.productId === itemInput.productId)
                 if (index !== -1) {
                     if (amountInput <= 0 || Number.isNaN(amountInput)) {
                         itemInput.amount = 1;
